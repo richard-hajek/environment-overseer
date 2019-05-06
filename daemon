@@ -4,6 +4,7 @@ import os
 import sched
 import signal
 import time
+import itertools
 from shutil import copyfile
 
 enabled_activities = []
@@ -68,7 +69,7 @@ def bump(force_run=False):
     # --------------------------------------------
     # - CALCULATING NEW TIMES                    -
     # --------------------------------------------
-    for activity in zip(enabled_activities, just_disabled):
+    for activity in itertools.chain(enabled_activities, just_disabled):
         time_left = get_time_left(activity) - (time.time() - bumped_at)
         update_limit(activity, time_left)
 
@@ -90,11 +91,13 @@ def bump(force_run=False):
         if not just_enabled.__contains__(activity) and not just_disabled.__contains__(activity) and force_run:
             just_disabled.append(activity)
 
-    for to_start in just_enabled:
-        run(to_start, "enable")
+    for activity in just_enabled:
+        run(activity, "enable")
 
-    for to_stop in just_disabled:
-        run(to_stop, "disable")
+    for activity in just_disabled:
+        run(activity, "disable")
+        if os.path.islink(f"active/{activity}"):
+            os.remove(f"active/{activity}")
 
     # --------------------------------------------
     # - TIMING NEXT BUMP                         -
