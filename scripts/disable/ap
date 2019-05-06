@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+systemctl stop meownet-ap

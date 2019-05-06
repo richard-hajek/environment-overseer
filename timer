@@ -1,0 +1,130 @@
+#!/usr/bin/python
+
+import signal
+import sched
+import time
+import os
+from shutil import copyfile
+
+bumped_at = {}
+timer = sched.scheduler(time.time, time.sleep)
+
+
+def sigusr(_, __):
+    bump()
+
+
+def restart():
+    for f in os.listdir("today"):
+        os.remove(f"today/{f}")
+
+    for f in os.listdir("active"):
+        os.remove(f"active/{f}")
+
+    for f in os.listdir("plan"):
+        copyfile(f"plan/{f}", f"today/{f}")
+
+
+# Update disabled / enabled activities
+def bump():
+    print("----Bumping----")
+    activities = os.listdir("today")
+    active = os.listdir("active")
+
+    starting = []
+    stopping = []
+
+    # Find started activities
+    for activity in active:
+        if not bumped_at.__contains__(activity):
+            bumped_at[activity] = time.time()
+            starting.append(activity)
+
+    # Find stopped activities
+    for activity in activities:
+        if not active.__contains__(activity):
+            stopping.append(activity)
+
+    # Flag expired activities
+    for activity in bumped_at:
+        finishes_at = bumped_at[activity] + get_limit(activity)
+        if finishes_at < time.time():
+            stopping.append(activity)
+
+    # Updated files
+    for activity in activities:
+        if bumped_at.__contains__(activity):
+            time_left = get_limit(activity) - (time.time() - bumped_at[activity])
+            update_limit(activity, time_left)
+
+    # Updated tracking list
+    for activity in bumped_at:
+        bumped_at[activity] = time.time()
+
+    # Run all stopping and starting scripts
+    for to_start in starting:
+        if stopping.__contains__(to_start):
+            continue
+        run(to_start, "enable")
+
+    for to_stop in stopping:
+        if starting.__contains__(to_stop) or not bumped_at.__contains__(to_stop):
+            continue
+        run(to_stop, "disable")
+
+    # Clean the bumped_at list of stopped activities
+    for activity in stopping:
+        if bumped_at.__contains__(activity):
+            bumped_at.__delitem__(activity)
+
+    # Find soonest new change (default is 5 min)
+    if bumped_at.__len__() == 0:
+        next_bump = 60
+    else:
+        next_bump = -1
+        for i in bumped_at:
+            lmt = get_limit(i)
+            if lmt < next_bump or next_bump == -1:
+                next_bump = lmt
+
+    next_bump = min(60, next_bump)
+
+    print(f"Scheduling next bump in {next_bump} seconds")
+    timer.enter(next_bump, 1, bump)
+
+
+def run(activity, action):
+    print(f"Running {action} for {activity}")
+    os.system(f"scripts/{action}/{activity}")
+
+
+def get_limit(activity):
+    copy_to_today_if_doesnt_exist(activity)
+    file = f"today/{activity}"
+    with open(file, 'r') as content_file:
+        limit = content_file.read()
+    limit = float(limit)
+    return limit
+
+
+def update_limit(activity, time_left):
+    copy_to_today_if_doesnt_exist(activity)
+    f = open(f"today/{activity}", 'w')
+    f.write(str(time_left))
+    f.close()
+
+
+def copy_to_today_if_doesnt_exist(activity):
+    if not os.path.isfile(f"today/{activity}"):
+        copyfile(f"plan/{activity}", f"today/{activity}")
+
+
+restart()
+signal.signal(signal.SIGUSR1, sigusr)
+bump()
+
+with open("/tmp/overseer.pid", "w") as f:
+    f.write(str(os.getpid()))
+    f.close()
+
+timer.run()
