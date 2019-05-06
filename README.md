@@ -12,9 +12,13 @@ This small batch of Python scripts allows one to control their environment. It i
 
 ## Usage
 
-`timer` needs to be running in order for the app to work, I recommend creating a systemd service for it.  
-`enable <activity>` enables an activity  
-`disable <activity>` disables an activity
+`daemon`: Main daemon of the app.  
+`enable <activity>`: Enables an activity  
+`disable <activity>`: Disables an activity  
+`record`: Copies today to dedicated `history` folder, useful for keeping a history
+
+`daemon` nor `record` will not be ran automatically, yet they are designed to do be.  
+You should let `daemon` run all the time and `record` once a day, by any method you see fit.
 
 ## Structure
 

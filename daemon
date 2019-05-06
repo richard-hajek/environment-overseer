@@ -1,0 +1,150 @@
+#!/usr/bin/python
+
+import os
+import sched
+import signal
+import time
+from shutil import copyfile
+
+enabled_activities = []
+bumped_at = -1
+timer = sched.scheduler(time.time, time.sleep)
+
+
+def sigusr(_, __):
+    bump()
+
+
+def sigusr2(_, __):
+    restart()
+
+
+def restart():
+    """
+    Restart the tracked times
+
+    :return:
+    """
+    for f in os.listdir("today"):
+        os.remove(f"today/{f}")
+
+    for f in os.listdir("active"):
+        os.remove(f"active/{f}")
+
+    for f in os.listdir("limits"):
+        copyfile(f"limits/{f}", f"today/{f}")
+
+
+def bump(force_run=False):
+    """
+    Searches for newly enabled / disabled activities
+    Searches for activities which ran out of time
+
+    Updates files for active activities
+
+    :param force_run: Forces bump to run disable or enable scripts of all activities
+    """
+    global bumped_at
+    print("----Bumping----")
+    activities = os.listdir("today")
+    active = os.listdir("active")
+
+    just_enabled = []
+    just_disabled = []
+
+    # --------------------------------------------
+    # - FIND NEWLY ENABLED / DISABLED ACTIVITIES -
+    # --------------------------------------------
+    for activity in active:
+        if not enabled_activities.__contains__(activity):
+            just_enabled.append(activity)
+            enabled_activities.append(activity)
+
+    for activity in enabled_activities:
+        if not active.__contains__(activity):
+            just_disabled.append(activity)
+            enabled_activities.remove(activity)
+
+    # --------------------------------------------
+    # - CALCULATING NEW TIMES                    -
+    # --------------------------------------------
+    for activity in zip(enabled_activities, just_disabled):
+        time_left = get_time_left(activity) - (time.time() - bumped_at)
+        update_limit(activity, time_left)
+
+    for activity in enabled_activities:
+        finishes_at = bumped_at + get_time_left(activity)
+        if finishes_at < time.time():
+            just_disabled.append(activity)
+            enabled_activities.remove(activity)
+
+    bumped_at = time.time()
+
+    # --------------------------------------------
+    # - RUNNING ENABLE / DISABLE SCRIPTS         -
+    # --------------------------------------------
+    for activity in activities:
+        if just_enabled.__contains__(activity) and just_disabled.__contains__(activity):
+            just_enabled.remove(activity)
+            just_disabled.remove(activity)
+        if not just_enabled.__contains__(activity) and not just_disabled.__contains__(activity) and force_run:
+            just_disabled.append(activity)
+
+    for to_start in just_enabled:
+        run(to_start, "enable")
+
+    for to_stop in just_disabled:
+        run(to_stop, "disable")
+
+    # --------------------------------------------
+    # - TIMING NEXT BUMP                         -
+    # --------------------------------------------
+    for event in timer.queue:
+        timer.cancel(event)
+
+    next_bump = 60
+    for activity in enabled_activities:
+        lmt = get_time_left(activity)
+        if lmt < next_bump:
+            next_bump = lmt
+
+    print(f"Scheduling next bump in {next_bump} seconds")
+    timer.enter(next_bump, 1, bump)
+
+
+def run(activity, action):
+    print(f"Running {action} for {activity}")
+    os.system(f"scripts/{action}/{activity}")
+
+
+def get_time_left(activity):
+    copy_to_today_if_doesnt_exist(activity)
+    path = f"today/{activity}"
+    with open(path, 'r') as content_file:
+        limit = content_file.read()
+    limit = float(limit)
+    return limit
+
+
+def update_limit(activity, time_left):
+    copy_to_today_if_doesnt_exist(activity)
+    f = open(f"today/{activity}", 'w')
+    f.write(str(time_left))
+    f.close()
+
+
+def copy_to_today_if_doesnt_exist(activity):
+    if not os.path.isfile(f"today/{activity}"):
+        copyfile(f"limits/{activity}", f"today/{activity}")
+
+
+restart()
+signal.signal(signal.SIGUSR1, sigusr)
+signal.signal(signal.SIGUSR2, sigusr2)
+bump(force_run=True)
+
+with open("/tmp/overseer.pid", "w") as file:
+    file.write(str(os.getpid()))
+    file.close()
+
+timer.run()

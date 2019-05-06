@@ -1,0 +1,26 @@
+#!/usr/bin/python
+import os
+import signal
+import sys
+import time
+from shutil import copyfile
+
+
+def restart():
+    with open("/tmp/overseer.pid", 'r') as content_file:
+        pid = content_file.read()
+        pid = int(pid)
+        os.kill(pid, signal.SIGUSR2)
+
+
+if len(sys.argv) != 1:
+    print("Must pass no arguments!")
+    exit(1)
+
+today_dir = time.strftime("%d_%m_%Y")
+
+if not os.path.isdir(today_dir):
+    os.mkdir(f"history/{today_dir}")
+
+for activity in os.listdir("today"):
+    copyfile(f"today/{activity}", f"history/{today_dir}/{activity}")
