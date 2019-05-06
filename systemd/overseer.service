@@ -1,0 +1,8 @@
+[Unit]
+Description=Environment Overseer Daemon
+
+[Service]
+ExecStart=overseer
+
+[Install]
+WantedBy=multi-user.target

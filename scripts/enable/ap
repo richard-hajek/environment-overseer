@@ -1,3 +1,0 @@
-#!/usr/bin/bash
-
-systemctl start meownet-ap

@@ -1,6 +1,0 @@
-#!/usr/bin/bash
-
-pihole -b youtube.com
-pihole -b www.youtube.com
-pihole -b youtubei.googleapis.com
-pihole --wild googlevideo.com
