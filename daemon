@@ -138,6 +138,10 @@ def copy_to_today_if_doesnt_exist(activity):
         copyfile(f"limits/{activity}", f"today/{activity}")
 
 
+script_path = os.path.abspath(__file__)
+script_dir = os.path.dirname(script_path)
+os.chdir(script_dir)
+
 restart()
 signal.signal(signal.SIGUSR1, sigusr)
 signal.signal(signal.SIGUSR2, sigusr2)
