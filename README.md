@@ -9,9 +9,16 @@ This small batch of Python scripts allows one to control their environment. It i
 * [X] Limit YouTube to z hours a day
 * [X] And much more
 
-### Structure
 
-Anything can be block, as long as you have a script to block it and script to unblock it.
+## Usage
+
+`timer` needs to be running in order for the app to work, I recommend creating a systemd service for it.  
+`enable <activity>` enables an activity  
+`disable <activity>` disables an activity
+
+## Structure
+
+Anything can be blocked, as long as you have a script to block it and script to unblock it.
 These go to `scripts/enable/<name>` and `scripts/disable/<name>`.
 Last file you need is `limits/<name>` which should contain the time one is allowed to leave an activity enabled, in seconds.
 
