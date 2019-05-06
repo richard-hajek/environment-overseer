@@ -138,9 +138,24 @@ def copy_to_today_if_doesnt_exist(activity):
         copyfile(f"limits/{activity}", f"today/{activity}")
 
 
+def create_folders_if_non_existent():
+    if not os.path.isdir("active"):
+        os.mkdir("active")
+    if not os.path.isdir("today"):
+        os.mkdir("today")
+    if not os.path.isdir("scripts"):
+        os.mkdir("scripts")
+        os.mkdir("scripts/enable")
+        os.mkdir("scripts/disable")
+    if not os.path.isdir("limits"):
+        os.mkdir("limits")
+
+
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
+
+create_folders_if_non_existent()
 
 restart()
 signal.signal(signal.SIGUSR1, sigusr)
