@@ -45,7 +45,7 @@ def link_disable(activity):
 def write_history():
     today_dir = time.strftime("%d_%m_%Y")
 
-    if not os.path.isdir(today_dir):
+    if not os.path.isdir(f"history/{today_dir}"):
         os.mkdir(f"history/{today_dir}")
 
     for activity in os.listdir("today"):
