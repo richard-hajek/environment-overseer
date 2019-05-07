@@ -42,12 +42,13 @@ EnvironmentOverseer
 │   │   └── <activity>
 │   └── enable
 │       └── <activity>
-└── today
-    └── <activity> # Auto generated, do not create
+├── today
+│   └── <activity> # Auto generated, do not create, contains number of seconds activity spent enabled
+└── active
+    └── <activity> # Only exists if the activity is currently enabled
 ```
 
 In examples above `<activity>` is always a single file, named by the activity itself.
 
-Files in `today` will be generated automatically and contain number of seconds activity spent enabled.
-It is refreshed every ~60 seconds.
-See my defined limits for examples.
+Folders `today` and `active` are both runtime generated, you should only read from those.
+They are refreshed every ~60 seconds.
