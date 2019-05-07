@@ -48,6 +48,6 @@ EnvironmentOverseer
 
 In examples above `<activity>` is always a single file, named by the activity itself.
 
-Files in `today` will be generated automatically and contains number of seconds activity spent enabled.
+Files in `today` will be generated automatically and contain number of seconds activity spent enabled.
 It is refreshed every ~60 seconds.
 See my defined limits for examples.
