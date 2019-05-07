@@ -77,6 +77,7 @@ def bump(force_run=False):
 
     :param force_run: Forces bump to run disable or enable scripts of all activities
     """
+    create_all_records()
     global bumped_at
     print("----Bumping----")
     activities = os.listdir("today")
