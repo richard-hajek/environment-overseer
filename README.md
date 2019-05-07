@@ -1,6 +1,7 @@
 # Environment Overseer
 
-This small batch of Python scripts allows one to control their environment. It is useful, if you want to limit exposure to certain activities or influences (internet, etc...).
+This small Python script allows one to control their environment.
+It uses user-defined enable and disable scripts and internal timer to run these scripts as per user specification.
 
 ## Examples
 
@@ -12,13 +13,15 @@ This small batch of Python scripts allows one to control their environment. It i
 
 ## Usage
 
-`daemon`: Main daemon of the app.  
-`enable <activity>`: Enables an activity  
-`disable <activity>`: Disables an activity  
-`record`: Copies today to dedicated `history` folder, useful for keeping a history
+`overseer`: Start main daemon of the app.  
+`overseer -e <activity>`: Enables an activity  
+`overseer -d <activity>`: Disables an activity  
+`overseer -r`: Resets the time intervals for all activities  
+`overseer -w`: Copies folder `today` to dedicated `history` folder, useful for keeping a history
 
-`daemon` nor `record` will not be ran automatically, yet they are designed to do be.  
-You should let `daemon` run all the time and `record` once a day, by any method you see fit.
+`overseer`, `overseer -r` nor `overseer -w` will not be ran automatically, yet they are designed to be.
+Thus it is advisable to run these automatically, either using systemd or cron.
+All commands need a prior `overseer` to be running. There can only be one `overseer` running at one time, preferably all the time.
 
 ## Structure
 
@@ -40,6 +43,6 @@ EnvironmentOverseer
     └── <name> # Auto generated, do not create
 ```
 
-File in `today` will be generated automatically and contains number of seconds left, you may use this to read how much time is left. It refreshes every ~60 seconds.
-
+Files in `today` will be generated automatically and contains number of seconds activity spent enabled.
+It is refreshed every ~60 seconds.
 See my defined limits for examples.
