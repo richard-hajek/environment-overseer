@@ -172,6 +172,11 @@ def get_activity_time(activity):
     return time_spent
 
 
+def create_all_records():
+    for activity in os.listdir("limits"):
+        create_record_if_non_existent(activity)
+
+
 def create_record_if_non_existent(activity):
     path = f"today/{activity}"
 

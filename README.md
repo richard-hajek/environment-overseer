@@ -33,14 +33,14 @@ Ergo, the total structure is as following:
 ```
 EnvironmentOverseer
 ├── limits
-│   └── <name>
+│   └── <activity>
 ├── scripts
 │   ├── disable
-│   │   └── <name>
+│   │   └── <activity>
 │   └── enable
-│       └── <name>
+│       └── <activity>
 └── today
-    └── <name> # Auto generated, do not create
+    └── <activity> # Auto generated, do not create
 ```
 
 Files in `today` will be generated automatically and contains number of seconds activity spent enabled.
