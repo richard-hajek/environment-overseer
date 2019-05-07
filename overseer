@@ -1,11 +1,19 @@
 #!/usr/bin/python
 
+import argparse
+import itertools
 import os
 import sched
 import signal
 import time
-import itertools
 from shutil import copyfile
+
+parser = argparse.ArgumentParser(description="Controls the environment overseer")
+parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
+parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
+parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers')
+parser.add_argument('-w', '--write', action='store_true', help='Write usage to history')
+args = parser.parse_args()
 
 enabled_activities = []
 bumped_at = -1
@@ -17,13 +25,36 @@ def sigusr(_, __):
 
 
 def sigusr2(_, __):
-    restart()
+    reset_timers()
 
 
-def restart():
+def link_enable(activity):
+    if not os.path.isfile(f"today/{activity}"):
+        with open(f"today/{activity}", 'w') as file:
+            file.write('0')
+
+    if not os.path.islink(f"active/{activity}"):
+        os.symlink(f"today/{activity}", f"active/{activity}")
+
+
+def link_disable(activity):
+    if os.path.islink(f"active/{activity}"):
+        os.remove(f"active/{activity}")
+
+
+def write_history():
+    today_dir = time.strftime("%d_%m_%Y")
+
+    if not os.path.isdir(today_dir):
+        os.mkdir(f"history/{today_dir}")
+
+    for activity in os.listdir("today"):
+        copyfile(f"today/{activity}", f"history/{today_dir}/{activity}")
+
+
+def reset_timers():
     """
     Restart the tracked times
-
     :return:
     """
     for f in os.listdir("today"):
@@ -32,8 +63,9 @@ def restart():
     for f in os.listdir("active"):
         os.remove(f"active/{f}")
 
-    for f in os.listdir("limits"):
-        copyfile(f"limits/{f}", f"today/{f}")
+    for activity in os.listdir("limits"):
+        with open(f"today/{activity}", 'w') as file:
+            file.write('0')
 
 
 def bump(force_run=False):
@@ -69,13 +101,17 @@ def bump(force_run=False):
     # --------------------------------------------
     # - CALCULATING NEW TIMES                    -
     # --------------------------------------------
+    time_passed = time.time() - bumped_at
     for activity in itertools.chain(enabled_activities, just_disabled):
-        time_left = get_time_left(activity) - (time.time() - bumped_at)
-        update_limit(activity, time_left)
+
+        if just_enabled.__contains__(activity):
+            continue
+
+        activity_time = get_activity_time(activity) + time_passed
+        update_time(activity, activity_time)
 
     for activity in enabled_activities:
-        finishes_at = bumped_at + get_time_left(activity)
-        if finishes_at < time.time():
+        if get_activity_time(activity) > get_limit(activity):
             just_disabled.append(activity)
             enabled_activities.remove(activity)
 
@@ -107,9 +143,9 @@ def bump(force_run=False):
 
     next_bump = 60
     for activity in enabled_activities:
-        lmt = get_time_left(activity)
-        if lmt < next_bump:
-            next_bump = lmt
+        time_left = get_limit(activity) - get_activity_time(activity)
+        if time_left < next_bump:
+            next_bump = time_left
 
     print(f"Scheduling next bump in {next_bump} seconds")
     timer.enter(next_bump, 1, bump)
@@ -120,25 +156,36 @@ def run(activity, action):
     os.system(f"scripts/{action}/{activity}")
 
 
-def get_time_left(activity):
-    copy_to_today_if_doesnt_exist(activity)
-    path = f"today/{activity}"
+def get_limit(activity):
+    path = f"limits/{activity}"
     with open(path, 'r') as content_file:
         limit = content_file.read()
     limit = float(limit)
     return limit
 
 
-def update_limit(activity, time_left):
-    copy_to_today_if_doesnt_exist(activity)
+def get_activity_time(activity):
+    path = f"today/{activity}"
+    with open(path, 'r') as content_file:
+        time_spent = content_file.read()
+    time_spent = float(time_spent)
+    return time_spent
+
+
+def create_record_if_non_existent(activity):
+    path = f"today/{activity}"
+
+    if os.path.isfile(path):
+        return
+
+    with open(path, 'w') as content_file:
+        content_file.write('0')
+
+
+def update_time(activity, time_passed):
     f = open(f"today/{activity}", 'w')
-    f.write(str(time_left))
+    f.write(str(time_passed))
     f.close()
-
-
-def copy_to_today_if_doesnt_exist(activity):
-    if not os.path.isfile(f"today/{activity}"):
-        copyfile(f"limits/{activity}", f"today/{activity}")
 
 
 def create_folders_if_non_existent():
@@ -154,19 +201,57 @@ def create_folders_if_non_existent():
         os.mkdir("limits")
 
 
+def remote_bump():
+    with open("/tmp/overseer.pid", 'r') as content_file:
+        pid = content_file.read()
+        pid = int(pid)
+        os.kill(pid, signal.SIGUSR1)
+
+
+def remote_reset():
+    with open("/tmp/overseer.pid", 'r') as content_file:
+        pid = content_file.read()
+        pid = int(pid)
+        os.kill(pid, signal.SIGUSR2)
+
+
+# Preparation
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
-
 create_folders_if_non_existent()
 
-restart()
-signal.signal(signal.SIGUSR1, sigusr)
-signal.signal(signal.SIGUSR2, sigusr2)
-bump(force_run=True)
+start_daemon = not args.enable and \
+               not args.disable and \
+               not args.write and \
+               not args.reset
 
-with open("/tmp/overseer.pid", "w") as file:
-    file.write(str(os.getpid()))
-    file.close()
+if args.enable:
+    print("Enabling activities...")
+    for a in args.enable:
+        link_enable(a)
+    remote_bump()
 
-timer.run()
+if args.disable:
+    print("Disabling activities...")
+    for a in args.disable:
+        link_disable(a)
+    remote_bump()
+
+if args.write:
+    print("Writing to history...")
+    write_history()
+
+if args.reset:
+    print("Resetting limits...")
+    remote_reset()
+
+if start_daemon:
+    print("Starting as daemon...")
+    signal.signal(signal.SIGUSR1, sigusr)
+    signal.signal(signal.SIGUSR2, sigusr2)
+    bump(force_run=True)
+    with open("/tmp/overseer.pid", "w") as pidf:
+        pidf.write(str(os.getpid()))
+        pidf.close()
+    timer.run()
