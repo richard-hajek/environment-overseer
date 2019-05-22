@@ -29,10 +29,6 @@ def sigusr2(_, __):
 
 
 def link_enable(activity):
-    if not os.path.isfile(f"today/{activity}"):
-        with open(f"today/{activity}", 'w') as file:
-            file.write('0')
-
     if not os.path.islink(f"active/{activity}"):
         os.symlink(f"today/{activity}", f"active/{activity}")
 
@@ -225,7 +221,6 @@ def remote_reset():
 script_path = os.path.abspath(__file__)
 script_dir = os.path.dirname(script_path)
 os.chdir(script_dir)
-create_folders_if_non_existent()
 
 start_daemon = not args.enable and \
                not args.disable and \
@@ -254,6 +249,10 @@ if args.reset:
 
 if start_daemon:
     print("Starting as daemon...")
+
+    create_folders_if_non_existent()
+    create_all_records()
+
     signal.signal(signal.SIGUSR1, sigusr)
     signal.signal(signal.SIGUSR2, sigusr2)
     bump(force_run=True)
