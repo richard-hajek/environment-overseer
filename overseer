@@ -196,19 +196,18 @@ def update_time(activity, time_passed):
 
 
 def create_folders_if_non_existent():
-
     if not os.path.isdir(overseer_home):
         os.mkdir(overseer_home)
-    if not os.path.isdir("active"):
-        os.mkdir("active")
-    if not os.path.isdir("today"):
-        os.mkdir("today")
-    if not os.path.isdir("scripts"):
-        os.mkdir("scripts")
-        os.mkdir("scripts/enable")
-        os.mkdir("scripts/disable")
-    if not os.path.isdir("limits"):
-        os.mkdir("limits")
+    if not os.path.isdir(f"{overseer_home}/active"):
+        os.mkdir(f"{overseer_home}/active")
+    if not os.path.isdir(f"{overseer_home}/today"):
+        os.mkdir(f"{overseer_home}/today")
+    if not os.path.isdir(f"{overseer_home}/scripts"):
+        os.mkdir(f"{overseer_home}/scripts")
+        os.mkdir(f"{overseer_home}/scripts/enable")
+        os.mkdir(f"{overseer_home}/scripts/disable")
+    if not os.path.isdir(f"{overseer_home}/limits"):
+        os.mkdir(f"{overseer_home}/limits")
 
 
 def remote_bump():
