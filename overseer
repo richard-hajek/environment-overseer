@@ -313,8 +313,8 @@ if start_daemon:
     print("Starting as daemon...")
 
     create_folders_if_non_existent()
-    create_all_records()
     os.chdir(overseer_home)
+    create_all_records()
 
     signal.signal(signal.SIGUSR1, sigusr)
     signal.signal(signal.SIGUSR2, sigusr2)
