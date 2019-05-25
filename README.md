@@ -1,19 +1,18 @@
 # Environment Overseer
 
 This small Python script allows one to control their environment.
-It uses user-defined enable and disable scripts and internal timer to run these scripts as per user specification.
+It uses user-defined enable and disable scripts and internal timer to run these scripts.
 
 ## Examples
 
 * [X] Limit internet to x hours a day
 * [X] Limit Steam to y hours a day
-* [X] Limit YouTube to z hours a day
-* [X] And much more
+* [X] Limit YouTube to z hours a week
 
 
 ## Usage
 
-`overseer`: Start main daemon of the app.  
+`overseer`: Start main daemon of the app  
 `overseer -e <activity>`: Enables an activity  
 `overseer -d <activity>`: Disables an activity  
 `overseer -r`: Resets the time intervals for all activities  
@@ -34,7 +33,7 @@ Last file you need is `limits/<activity>` which should contain the time one is a
 
 Ergo, the total structure is as following:
 ```
-EnvironmentOverseer
+/etc/environment-overseer/
 ├── limits
 │   └── <activity>
 ├── scripts
