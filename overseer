@@ -21,7 +21,7 @@ enabled_activities = []
 bumped_at = -1
 timer = sched.scheduler(time.time, time.sleep)
 
-overseer_home = "/etc/environment-overseer"
+overseer_home = "/etc/environment-overseer/"
 archive_path = "/root/overseer-archive/"
 
 
@@ -226,7 +226,7 @@ def remote_reset():
 
 def is_daemon_running():
 
-    if not os.path.isfile("/tmp/overseer/pid"):
+    if not os.path.isfile("/tmp/overseer.pid"):
         return False
 
     with open("/tmp/overseer.pid", 'r') as content_file:
