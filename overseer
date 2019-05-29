@@ -22,7 +22,7 @@ bumped_at = -1
 timer = sched.scheduler(time.time, time.sleep)
 
 overseer_home = "/etc/environment-overseer/"
-archive_path = "/log/environment-overseer/"
+archive_path = "/var/log/environment-overseer/"
 
 
 def sigusr(_, __):
