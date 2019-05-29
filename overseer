@@ -22,7 +22,7 @@ bumped_at = -1
 timer = sched.scheduler(time.time, time.sleep)
 
 overseer_home = "/etc/environment-overseer/"
-archive_path = "/root/overseer-archive/"
+archive_path = "/log/environment-overseer/"
 
 
 def sigusr(_, __):
@@ -50,7 +50,7 @@ def write_history():
         os.mkdir(f"{archive_path}/{today_dir}")
 
     for activity in os.listdir("today"):
-        copyfile(f"today/{activity}", f"{archive_path}/{today_dir}/{activity}")
+        copyfile(f"today/{activity}", f"{archive_path}{today_dir}/{activity}")
 
 
 def reset_timers():
@@ -158,6 +158,10 @@ def run(activity, action):
     os.system(f"scripts/{action}/{activity}")
 
 
+def activity_exists(activity):
+    return os.path.isfile(f"{overseer_home}limits/{activity}")
+
+
 def get_limit(activity):
     path = f"limits/{activity}"
     with open(path, 'r') as content_file:
@@ -208,6 +212,8 @@ def create_folders_if_non_existent():
         os.mkdir(f"{overseer_home}/scripts/disable")
     if not os.path.isdir(f"{overseer_home}/limits"):
         os.mkdir(f"{overseer_home}/limits")
+    if not os.path.isdir(archive_path):
+        os.mkdir(archive_path)
 
 
 def remote_bump():
@@ -262,7 +268,10 @@ if args.enable:
     print("Enabling activities...")
     os.chdir(overseer_home)
     for a in args.enable:
-        link_enable(a)
+        if activity_exists(a):
+            link_enable(a)
+        else:
+            print(f"Did not find '{a}' activity")
     remote_bump()
 
 if args.disable:
@@ -278,7 +287,10 @@ if args.disable:
     print("Disabling activities...")
     os.chdir(overseer_home)
     for a in args.disable:
-        link_disable(a)
+        if activity_exists(a):
+            link_disable(a)
+        else:
+            print(f"Did not find '{a}' activity")
     remote_bump()
 
 if args.write:
