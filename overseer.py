@@ -194,7 +194,7 @@ def bump(force_run=False):
     # --------------------------------------------
     # - RUNNING ENABLE / DISABLE SCRIPTS         -
     # --------------------------------------------
-    for activity in activities:
+    for activity in activities.values():
         act_name = activity["name"]
         if names_just_enabled.__contains__(act_name) and names_just_disabled.__contains__(act_name):
             names_just_enabled.remove(act_name)
