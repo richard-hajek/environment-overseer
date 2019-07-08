@@ -204,11 +204,11 @@ def bump(force_run=False):
 
     for activity in names_just_enabled:
         run_enable(activities[activity])
-        link_enable(activities[activity])
+        link_enable(activities[activity]["name"])
 
     for activity in names_just_disabled:
         run_disable(activities[activity])
-        link_disable(activities[activity])
+        link_disable(activities[activity]["name"])
 
     # --------------------------------------------
     # - SCHEDULING NEXT BUMP                     -
