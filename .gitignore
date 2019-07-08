@@ -1,5 +1,5 @@
 .idea
-history/*
-active/*
-today/*
-limits/*
+activities
+exec
+status
+timers
