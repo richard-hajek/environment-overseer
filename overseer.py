@@ -116,7 +116,7 @@ def bump(force_run=False):
     for activity_name in names_active:
         if not enabled_activities.__contains__(activity_name):
             names_just_enabled.append(activity_name)
-            enabled_activities.append(activity_name)
+            enabled_activities.append(activities[activity_name])
 
     for activity in enabled_activities:
         if not names_active.__contains__(activity["name"]):
