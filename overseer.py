@@ -304,7 +304,7 @@ def create_record_if_non_existent(activity):
 
 
 def update_time(activity, seconds):
-    with open(f"{path_timers}/{activity}", 'w') as file:
+    with open(f"{path_timers}/{activity['name']}", 'w') as file:
         file.write(str(int(seconds)))
 
 
