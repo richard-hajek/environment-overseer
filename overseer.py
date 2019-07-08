@@ -227,7 +227,7 @@ def parse_activities():
         activity["name"] = name.split(".")[0]
         activities[activity['name']] = activity
 
-    for activity in activities:
+    for activity in activities.values():
         limit_raw = activity["Limit"]
         limit = 0
 
