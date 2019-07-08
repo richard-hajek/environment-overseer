@@ -103,23 +103,24 @@ def bump(force_run=False):
 
     print("----Bumping----")
     create_all_records()
-    activities = parse_activities()
-    active = os.listdir(path_status)
 
-    just_enabled = []
-    just_disabled = []
+    activities = parse_activities()
+
+    names_active = os.listdir(path_status)
+    names_just_enabled = []
+    names_just_disabled = []
 
     # --------------------------------------------
     # - FIND NEWLY ENABLED / DISABLED ACTIVITIES -
     # --------------------------------------------
-    for activity in active:
-        if not enabled_activities.__contains__(activity):
-            just_enabled.append(activity)
-            enabled_activities.append(activity)
+    for activity_name in names_active:
+        if not enabled_activities.__contains__(activity_name):
+            names_just_enabled.append(activity_name)
+            enabled_activities.append(activity_name)
 
     for activity in enabled_activities:
-        if not active.__contains__(activity):
-            just_disabled.append(activity)
+        if not names_active.__contains__(activity["name"]):
+            names_just_disabled.append(activity["name"])
             enabled_activities.remove(activity)
 
     # --------------------------------------------
@@ -129,7 +130,7 @@ def bump(force_run=False):
     prev_time = datetime.datetime.fromtimestamp(bumped_at).time()
     now_time = datetime.datetime.now().time()
 
-    for activity in activities:
+    for activity in activities.values():
 
         if not activity.__contains__("AutoStart"):
             continue
@@ -138,9 +139,9 @@ def bump(force_run=False):
 
         if prev_time < start_time <= now_time:
             if not enabled_activities.__contains__(activity):
-                just_enabled.append(activity)
+                names_just_enabled.append(activity)
 
-    for activity in activities:
+    for activity in activities.values():
 
         if not activity.__contains__("AutoStop"):
             continue
@@ -148,13 +149,13 @@ def bump(force_run=False):
         stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
         if prev_time < stop_time <= now_time:
             if enabled_activities.__contains__(activity):
-                just_disabled.append(activity)
+                names_just_disabled.append(activity)
 
     # -----------------------------------------------------------------
     # - CHECK STATUS SCRIPTS -> FIND IF ANY ACTIVS. STOPPED / STARTED -
     # -----------------------------------------------------------------
 
-    for activity in activities:
+    for activity in activities.values():
 
         if status_script_exists(activity):
 
@@ -162,18 +163,22 @@ def bump(force_run=False):
 
             if enabled_activities.__contains__(activity):
                 if not activity_status:
-                    just_enabled.append(activity)
+                    names_just_enabled.append(activity)
             else:
                 if activity_status:
-                    just_disabled.append(activity)
+                    names_just_disabled.append(activity)
 
     # --------------------------------------------
     # - CALCULATING NEW TIMES                    -
     # --------------------------------------------
-    time_passed = time.time() - bumped_at
-    for activity in itertools.chain(enabled_activities, just_disabled):
 
-        if just_enabled.__contains__(activity):
+    time_passed = time.time() - bumped_at
+    for activity in itertools.chain(enabled_activities, names_just_disabled):
+
+        if activity is str:
+            activity = activities[activity]
+
+        if names_just_enabled.__contains__(activity["name"]):
             continue
 
         activity_time = get_activity_time(activity) + time_passed
@@ -181,7 +186,7 @@ def bump(force_run=False):
 
     for activity in enabled_activities:
         if activity["Limit"] != 0 and get_activity_time(activity) > activity["Limit"]:
-            just_disabled.append(activity)
+            names_just_disabled.append(activity["name"])
             enabled_activities.remove(activity)
 
     bumped_at = time.time()
@@ -190,19 +195,20 @@ def bump(force_run=False):
     # - RUNNING ENABLE / DISABLE SCRIPTS         -
     # --------------------------------------------
     for activity in activities:
-        if just_enabled.__contains__(activity) and just_disabled.__contains__(activity):
-            just_enabled.remove(activity)
-            just_disabled.remove(activity)
-        if not just_enabled.__contains__(activity) and not just_disabled.__contains__(activity) and force_run:
-            just_disabled.append(activity)
+        act_name = activity["name"]
+        if names_just_enabled.__contains__(act_name) and names_just_disabled.__contains__(act_name):
+            names_just_enabled.remove(act_name)
+            names_just_disabled.remove(act_name)
+        if not names_just_enabled.__contains__(act_name) and not names_just_disabled.__contains__(act_name) and force_run:
+            names_just_disabled.append(act_name)
 
-    for activity in just_enabled:
-        run_enable(activity)
+    for activity in names_just_enabled:
+        run_enable(activities[activity])
+        link_enable(activities[activity])
 
-    for activity in just_disabled:
-        run_disable(activity)
-        if os.path.islink(f"usage/{activity}"):
-            os.remove(f"usage/{activity}")
+    for activity in names_just_disabled:
+        run_enable(activities[activity])
+        link_disable(activities[activity])
 
     # --------------------------------------------
     # - SCHEDULING NEXT BUMP                     -
@@ -214,12 +220,12 @@ def bump(force_run=False):
 
 def parse_activities():
     names = os.listdir(path_definitions)
-    activities = []
+    activities = {}
     for name in names:
         with open(f"{path_definitions}/{name}", 'r') as f:
             activity = json.load(f)
         activity["name"] = name.split(".")[0]
-        activities.append(activity)
+        activities[activity['name']] = activity
 
     for activity in activities:
         limit_raw = activity["Limit"]
@@ -362,9 +368,9 @@ if __name__ == "__main__":
         activities = parse_activities()
         enabled = os.listdir(path_status)
 
-        for activity in activities:
-            print(activity["name"], end='\t')
-            if enabled.__contains__(activity["name"]):
+        for ls_activity in activities:
+            print(ls_activity["name"], end='\t')
+            if enabled.__contains__(ls_activity["name"]):
                 print("Enabled", end='\t')
             else:
                 print("Disabled", end='\t')
