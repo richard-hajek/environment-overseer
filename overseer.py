@@ -106,7 +106,7 @@ def bump(force_run=False):
 
     activities = parse_activities()
 
-    names_active = os.listdir(path_status)
+    names_active = [activity_file.split(".")[0] for activity_file in os.listdir(path_status)]
     names_just_enabled = []
     names_just_disabled = []
 
@@ -207,7 +207,7 @@ def bump(force_run=False):
         link_enable(activities[activity])
 
     for activity in names_just_disabled:
-        run_enable(activities[activity])
+        run_disable(activities[activity])
         link_disable(activities[activity])
 
     # --------------------------------------------
