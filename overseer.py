@@ -22,7 +22,7 @@ parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
 parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
 parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
 parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers')
-parser.add_argument('-p', '--reset', action='store_true', help='Prepares file structure')
+parser.add_argument('-p', '--prepare', action='store_true', help='Prepares file structure')
 
 exit_codes = {
     "success": (0, "Success"),
@@ -355,7 +355,26 @@ if __name__ == "__main__":
     start_daemon = not args.enable and \
                    not args.disable and \
                    not args.reset and \
-                   not args.list
+                   not args.list and \
+                   not args.prepare
+
+    if args.list:
+        activities = parse_activities()
+        enabled = os.listdir(path_status)
+
+        for activity in activities:
+            print(activity["name"], end='\t')
+            if enabled.__contains__(activity["name"]):
+                print("Enabled", end='\t')
+            else:
+                print("Disabled", end='\t')
+            print("\n")
+        exit(0)
+
+    if args.prepare:
+        print(f"Creating folder structure in {path_home}")
+        create_folders_if_non_existent()
+        exit(0)
 
     if start_daemon and is_daemon_running():
         die("daemon_running")
@@ -390,9 +409,6 @@ if __name__ == "__main__":
             else:
                 print(f"Did not find '{a}' activity")
         remote_bump()
-
-    if args.list:
-        pass
 
     if start_daemon:
         print("Starting as daemon...")
