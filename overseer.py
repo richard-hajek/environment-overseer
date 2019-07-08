@@ -175,7 +175,7 @@ def bump(force_run=False):
     time_passed = time.time() - bumped_at
     for activity in itertools.chain(enabled_activities, names_just_disabled):
 
-        if activity is str:
+        if type(activity) is str:
             activity = activities[activity]
 
         if names_just_enabled.__contains__(activity["name"]):
