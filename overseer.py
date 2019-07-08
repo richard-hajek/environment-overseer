@@ -270,7 +270,7 @@ def status_script_run(activity):
 
 
 def activity_exists(activity):
-    return os.path.isfile(f"{path_definitions}/{activity}")
+    return os.path.isfile(f"{path_definitions}/{activity}.json")
 
 
 def get_activity_time(activity):
