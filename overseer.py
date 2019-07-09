@@ -199,15 +199,15 @@ def bump(force_run=False):
             to_disable.append(act_name)
 
     for activity in to_enable:
-        run_enable(activities["name"])
-        link_enable(activities["name"])
+        run_enable(activity["name"])
+        link_enable(activity["name"])
 
         if not directory_active.__contains__(activity):
             directory_active.append(activity)
 
     for activity in to_disable:
-        run_disable(activities["name"])
-        link_disable(activities["name"])
+        run_disable(activity["name"])
+        link_disable(activity["name"])
 
         if directory_active.__contains__(activity):
             directory_active.remove(activity)
