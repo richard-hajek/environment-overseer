@@ -188,6 +188,8 @@ def bump(force_run=False):
     # - RUNNING ENABLE / DISABLE SCRIPTS         -
     # --------------------------------------------
 
+    # Remove duplicates
+    # Add forced runs
     for activity in activities.values():
         act_name = activity["name"]
         if to_enable.__contains__(activity) and to_disable.__contains__(activity):
@@ -197,15 +199,15 @@ def bump(force_run=False):
             to_disable.append(act_name)
 
     for activity in to_enable:
-        run_enable(activities[activity]["name"])
-        link_enable(activities[activity]["name"])
+        run_enable(activities["name"])
+        link_enable(activities["name"])
 
         if not directory_active.__contains__(activity):
             directory_active.append(activity)
 
     for activity in to_disable:
-        run_disable(activities[activity]["name"])
-        link_disable(activities[activity]["name"])
+        run_disable(activities["name"])
+        link_disable(activities["name"])
 
         if directory_active.__contains__(activity):
             directory_active.remove(activity)
