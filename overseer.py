@@ -363,7 +363,7 @@ if __name__ == "__main__":
                    not args.disable and \
                    not args.reset and \
                    not args.list and \
-                   not args.prepare
+                   not args.create
 
     if args.list:
         activities = parse_activities()
@@ -378,7 +378,7 @@ if __name__ == "__main__":
             print("\n")
         exit(0)
 
-    if args.prepare:
+    if args.create:
         print(f"Creating folder structure in {path_home}")
         create_folders_if_non_existent()
         exit(0)
