@@ -36,7 +36,8 @@ parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[p
 
 args = parser.parse_args()
 
-enabled_activities = []
+last_bump_active_names = []
+
 bumped_at = time.time()
 timer = sched.scheduler(time.time, time.sleep)
 
@@ -61,14 +62,14 @@ def sigusr2(_, __):
     reset_timers()
 
 
-def link_enable(name):
-    if not os.path.islink(f"{path_status}/{name}"):
-        os.symlink(f"{path_definitions}/{name}", f"{path_status}/{name}")
+def link_enable(act_name):
+    if not os.path.islink(f"{path_status}/{act_name}"):
+        os.symlink(f"{path_definitions}/{act_name}", f"{path_status}/{act_name}")
 
 
-def link_disable(name):
-    if os.path.islink(f"{path_status}/{name}"):
-        os.remove(f"{path_status}/{name}")
+def link_disable(act_name):
+    if os.path.islink(f"{path_status}/{act_name}"):
+        os.remove(f"{path_status}/{act_name}")
 
 
 def reset_timers():
@@ -94,6 +95,7 @@ def bump(force_run=False):
     """
 
     global bumped_at
+    global last_bump_active_names
 
     # --------------------------------------------
     # - PRELIMINARY TIMER PREPARATIONS           -
@@ -106,22 +108,21 @@ def bump(force_run=False):
 
     activities = parse_activities()
 
-    names_active = [activity_file.split(".")[0] for activity_file in os.listdir(path_status)]
-    names_just_enabled = []
-    names_just_disabled = []
+    directory_active = [activities[act_path.split(".")[0]] for act_path in os.listdir(path_status)]
+    to_enable = []  # Were disabled, now are enabled
+    to_disable = []  # Were enabled, now are disabled
 
     # --------------------------------------------
     # - FIND NEWLY ENABLED / DISABLED ACTIVITIES -
     # --------------------------------------------
-    for activity_name in names_active:
-        if not enabled_activities.__contains__(activity_name):
-            names_just_enabled.append(activity_name)
-            enabled_activities.append(activities[activity_name])
+    for activity in directory_active:
+        if not last_bump_active_names.__contains__(activity["name"]):
+            to_enable.append(activity)
 
-    for activity in enabled_activities:
-        if not names_active.__contains__(activity["name"]):
-            names_just_disabled.append(activity["name"])
-            enabled_activities.remove(activity)
+    for act_name in last_bump_active_names:
+        activity = activities[act_name]
+        if not directory_active.__contains__(activity):
+            to_disable.append(activity)
 
     # --------------------------------------------
     # - FIND ACTIVITIES SCHEDULED START / STOP   -
@@ -138,8 +139,8 @@ def bump(force_run=False):
         start_time = datetime.datetime.strptime(activity["AutoStart"], "%H:%M").time()
 
         if prev_time < start_time <= now_time:
-            if not enabled_activities.__contains__(activity):
-                names_just_enabled.append(activity)
+            if not directory_active.__contains__(activity):
+                to_enable.append(activity)
 
     for activity in activities.values():
 
@@ -148,8 +149,8 @@ def bump(force_run=False):
 
         stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
         if prev_time < stop_time <= now_time:
-            if enabled_activities.__contains__(activity):
-                names_just_disabled.append(activity)
+            if not directory_active.__contains__(activity):
+                to_enable.append(activity)
 
     # -----------------------------------------------------------------
     # - CHECK STATUS SCRIPTS -> FIND IF ANY ACTIVS. STOPPED / STARTED -
@@ -159,60 +160,62 @@ def bump(force_run=False):
 
         if status_script_exists(activity):
 
-            activity_status = status_script_run(activity)
+            activity_real_status = status_script_run(activity)
 
-            if enabled_activities.__contains__(activity):
-                if not activity_status:
-                    names_just_enabled.append(activity)
+            if directory_active.__contains__(activity):
+                if not activity_real_status:
+                    to_enable.append(activity)
             else:
-                if activity_status:
-                    names_just_disabled.append(activity)
+                if activity_real_status:
+                    to_disable.append(activity)
 
     # --------------------------------------------
     # - CALCULATING NEW TIMES                    -
     # --------------------------------------------
 
     time_passed = time.time() - bumped_at
-    for activity in itertools.chain(enabled_activities, names_just_disabled):
-
-        if type(activity) is str:
-            activity = activities[activity]
-
-        if names_just_enabled.__contains__(activity["name"]):
-            continue
-
+    for act_name in last_bump_active_names:
+        activity = activities[act_name]
         activity_time = get_activity_time(activity) + time_passed
         update_time(activity, activity_time)
 
-    for activity in enabled_activities:
-        if activity["Limit"] != 0 and get_activity_time(activity) > activity["Limit"]:
-            names_just_disabled.append(activity["name"])
-            enabled_activities.remove(activity)
+        if activity.__contains__("Limit") and get_activity_time(activity) > activity["Limit"]:
+            to_disable.append(activity)
 
     bumped_at = time.time()
 
     # --------------------------------------------
     # - RUNNING ENABLE / DISABLE SCRIPTS         -
     # --------------------------------------------
+
     for activity in activities.values():
         act_name = activity["name"]
-        if names_just_enabled.__contains__(act_name) and names_just_disabled.__contains__(act_name):
-            names_just_enabled.remove(act_name)
-            names_just_disabled.remove(act_name)
-        if not names_just_enabled.__contains__(act_name) and not names_just_disabled.__contains__(act_name) and force_run:
-            names_just_disabled.append(act_name)
+        if to_enable.__contains__(activity) and to_disable.__contains__(activity):
+            to_enable.remove(act_name)
+            to_disable.remove(act_name)
+        if not to_enable.__contains__(activity) and not to_disable.__contains__(activity) and force_run:
+            to_disable.append(act_name)
 
-    for activity in names_just_enabled:
+    for activity in to_enable:
         run_enable(activities[activity])
         link_enable(activities[activity]["name"])
 
-    for activity in names_just_disabled:
+        if not directory_active.__contains__(activity):
+            directory_active.append(activity)
+
+    for activity in to_disable:
         run_disable(activities[activity])
         link_disable(activities[activity]["name"])
+
+        if directory_active.__contains__(activity):
+            directory_active.remove(activity)
 
     # --------------------------------------------
     # - SCHEDULING NEXT BUMP                     -
     # --------------------------------------------
+
+    last_bump_active_names = [activity["name"] for activity in directory_active]
+
     next_bump = 60
     print(f"Scheduling next bump in {next_bump} seconds")
     timer.enter(next_bump, 1, bump)
@@ -254,33 +257,31 @@ def parse_activities():
     return activities
 
 
-def run_enable(activity):
-    activity = activity["name"]
-    print(f"Running enable for {activity}")
-    os.system(f"{path_scripts_enable}/{activity}")
+def run_enable(act_name):
+    print(f"Running enable for {act_name}")
+    os.system(f"{path_scripts_enable}/{act_name}")
 
 
-def run_disable(activity):
-    activity = activity["name"]
-    print(f"Running disable for {activity}")
-    os.system(f"{path_scripts_disable}/{activity}")
+def run_disable(act_name):
+    print(f"Running disable for {act_name}")
+    os.system(f"{path_scripts_disable}/{act_name}")
 
 
-def status_script_exists(activity):
-    return os.listdir(path_scripts_status).__contains__(activity["name"])
+def status_script_exists(act_name):
+    return os.listdir(path_scripts_status).__contains__(act_name)
 
 
-def status_script_run(activity):
-    script = subprocess.run(f"{path_scripts_status}/{activity['name']}", stdout=subprocess.PIPE)
+def status_script_run(act_name):
+    script = subprocess.run(f"{path_scripts_status}/{act_name}", stdout=subprocess.PIPE)
     return script.returncode != 0
 
 
-def activity_exists(name):
-    return os.path.isfile(f"{path_definitions}/{name}.json")
+def activity_exists(act_name):
+    return os.path.isfile(f"{path_definitions}/{act_name}.json")
 
 
-def get_activity_time(activity):
-    path = f"{path_timers}/{activity['name']}"
+def get_activity_time(act_name):
+    path = f"{path_timers}/{act_name}"
     with open(path, 'r') as content_file:
         time_spent = content_file.read()
     time_spent = float(time_spent)
@@ -293,8 +294,8 @@ def create_all_records():
         create_record_if_non_existent(activity)
 
 
-def create_record_if_non_existent(activity):
-    path = f"{path_timers}/{activity}"
+def create_record_if_non_existent(act_name):
+    path = f"{path_timers}/{act_name}"
 
     if os.path.isfile(path):
         return
@@ -303,8 +304,8 @@ def create_record_if_non_existent(activity):
         content_file.write('0')
 
 
-def update_time(activity, seconds):
-    with open(f"{path_timers}/{activity['name']}", 'w') as file:
+def update_time(act_name, seconds):
+    with open(f"{path_timers}/{act_name}", 'w') as file:
         file.write(str(int(seconds)))
 
 
