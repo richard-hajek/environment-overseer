@@ -22,6 +22,7 @@ parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
 parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
 parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers')
 parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
+parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
 
 exit_codes = {
     "success": (0, "Success"),
@@ -191,12 +192,16 @@ def bump(force_run=False):
     # Remove duplicates
     # Add forced runs
     for activity in activities.values():
-        act_name = activity["name"]
         if to_enable.__contains__(activity) and to_disable.__contains__(activity):
             to_enable.remove(activity)
             to_disable.remove(activity)
-        if not to_enable.__contains__(activity) and not to_disable.__contains__(activity) and force_run:
-            to_disable.append(activity)
+
+    if force_run:
+        for activity in activities.values():
+            if directory_active.__contains__(activity) and not to_enable.__contains__(activity):
+                to_enable.append(activity)
+            if not directory_active.__contains__(activity) and not to_disable.__contains__(activity):
+                to_disable.append(activity)
 
     for activity in to_enable:
         run_enable(activity["name"])
@@ -365,7 +370,8 @@ if __name__ == "__main__":
                    not args.disable and \
                    not args.reset and \
                    not args.list and \
-                   not args.create
+                   not args.create and \
+                   not args.bump
 
     if args.list:
         activities = parse_activities()
@@ -393,6 +399,10 @@ if __name__ == "__main__":
 
     if not start_daemon and not is_daemon_running():
         die("daemon_not_running")
+
+    if args.bump:
+        print("Bumping daemon...")
+        remote_bump()
 
     if args.reset:
         print("Resetting limits...")
