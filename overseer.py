@@ -193,10 +193,10 @@ def bump(force_run=False):
     for activity in activities.values():
         act_name = activity["name"]
         if to_enable.__contains__(activity) and to_disable.__contains__(activity):
-            to_enable.remove(act_name)
-            to_disable.remove(act_name)
+            to_enable.remove(activity)
+            to_disable.remove(activity)
         if not to_enable.__contains__(activity) and not to_disable.__contains__(activity) and force_run:
-            to_disable.append(act_name)
+            to_disable.append(activity)
 
     for activity in to_enable:
         run_enable(activity["name"])
