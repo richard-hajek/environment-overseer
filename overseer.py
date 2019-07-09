@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import argparse
-import itertools
 import os
 import sched
 import signal
@@ -22,7 +21,7 @@ parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
 parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
 parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
 parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers')
-parser.add_argument('-p', '--prepare', action='store_true', help='Prepares file structure')
+parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
 
 exit_codes = {
     "success": (0, "Success"),
@@ -115,6 +114,7 @@ def bump(force_run=False):
     # --------------------------------------------
     # - FIND NEWLY ENABLED / DISABLED ACTIVITIES -
     # --------------------------------------------
+
     for activity in directory_active:
         if not last_bump_active_names.__contains__(activity["name"]):
             to_enable.append(activity)
@@ -176,10 +176,10 @@ def bump(force_run=False):
     time_passed = time.time() - bumped_at
     for act_name in last_bump_active_names:
         activity = activities[act_name]
-        activity_time = get_activity_time(activity) + time_passed
-        update_time(activity, activity_time)
+        activity_time = get_activity_time(act_name) + time_passed
+        update_time(act_name, activity_time)
 
-        if activity.__contains__("Limit") and get_activity_time(activity) > activity["Limit"]:
+        if activity.__contains__("Limit") and activity_time > activity["Limit"]:
             to_disable.append(activity)
 
     bumped_at = time.time()
@@ -197,14 +197,14 @@ def bump(force_run=False):
             to_disable.append(act_name)
 
     for activity in to_enable:
-        run_enable(activities[activity])
+        run_enable(activities[activity]["name"])
         link_enable(activities[activity]["name"])
 
         if not directory_active.__contains__(activity):
             directory_active.append(activity)
 
     for activity in to_disable:
-        run_disable(activities[activity])
+        run_disable(activities[activity]["name"])
         link_disable(activities[activity]["name"])
 
         if directory_active.__contains__(activity):
