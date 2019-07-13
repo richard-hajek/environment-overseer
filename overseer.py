@@ -228,8 +228,8 @@ def bump(force_run=False):
     # --------------------------------------------
 
     for tracker in os.listdir(path_scripts_trackers):
-        os.system(tracker)
-    
+        os.system(f"{path_scripts_trackers}/{tracker}")
+
     # --------------------------------------------
     # - SCHEDULING NEXT BUMP                     -
     # --------------------------------------------
@@ -344,6 +344,8 @@ def create_folders_if_non_existent():
         os.makedirs(path_scripts_disable)
     if not os.path.isdir(path_scripts_status):
         os.makedirs(path_scripts_status)
+    if not os.path.isdir(path_scripts_trackers):
+        os.makedirs(path_scripts_trackers)
 
 
 def remote_bump():
