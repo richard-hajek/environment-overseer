@@ -16,13 +16,9 @@ def die(reason):
     exit(exit_codes[reason][0])
 
 
-parser = argparse.ArgumentParser(description="Controls the environment overseer")
-parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
-parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
-parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
-parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
-parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
-parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
+# --------------------------------------------
+# - DEFINE APP VARIABLES                     -
+# --------------------------------------------
 
 exit_codes = {
     "success": (0, "Success"),
@@ -32,29 +28,37 @@ exit_codes = {
     "misconfiguration": (4, "Overseer is misconfigured")
 }
 
-parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
-
-args = parser.parse_args()
-
-last_bump_active_names = []
-
-bumped_at = time.time()
-timer = sched.scheduler(time.time, time.sleep)
-
 path_home = "/etc/overseer"
-
-path_definitions = f"{path_home}/activities"  # Stores activity definitions
-path_status = f"{path_home}/status"  # Stores which activities are currently used, contains symlinks to path_activities
-path_timers = f"{path_home}/timers"  # Stores activity usage times
-
+path_definitions = f"{path_home}/activities"
+path_status = f"{path_home}/status"
+path_timers = f"{path_home}/timers"
+path_reverse_timers = f"{path_home}/rev_timers"
 path_scripts_enable = f"{path_home}/exec/enable"
 path_scripts_disable = f"{path_home}/exec/disable"
 path_scripts_status = f"{path_home}/exec/status"
 path_scripts_trackers = f"{path_home}/exec/trackers"
-
 path_pid = f"/run/overseer.pid"
-
 reset_phrase = "I am an addicted idiot and need to reset the timers."
+phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
+
+# --------------------------------------------
+# - READ CONSOLE ARGS                        -
+# --------------------------------------------
+
+parser = argparse.ArgumentParser(description="Controls the environment overseer")
+parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
+parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
+parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
+parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
+parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
+parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
+parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
+args = parser.parse_args()
+
+# Prepare global vars
+last_bump_active_names = []
+bumped_at = time.time()
+timer = sched.scheduler(time.time, time.sleep)
 
 
 def sigusr(_, __):
@@ -186,8 +190,16 @@ def bump(force_run=False):
         activity_time = get_activity_time(act_name) + time_passed
         update_time(act_name, activity_time)
 
-        if activity.__contains__("Limit") and activity_time > activity["Limit"]:
-            to_disable.append(activity)
+        if activity.__contains__("Limit"):
+            time_left = activity["Limit"] - activity_time
+
+            if time_left <= 0:
+                time_left = 0
+
+            update_rev_time(act_name, time_left)
+
+            if time_left == 0:
+                to_disable.append(activity)
 
     bumped_at = time.time()
 
@@ -329,6 +341,11 @@ def update_time(act_name, seconds):
         file.write(str(int(seconds)))
 
 
+def update_rev_time(act_name, seconds):
+    with open(f"{path_reverse_timers}/{act_name}", 'w') as file:
+        file.write(str(int(seconds)))
+
+
 def create_folders_if_non_existent():
     if not os.path.isdir(path_home):
         os.makedirs(path_home)
@@ -338,6 +355,8 @@ def create_folders_if_non_existent():
         os.makedirs(path_status)
     if not os.path.isdir(path_timers):
         os.makedirs(path_timers)
+    if not os.path.isdir(path_reverse_timers):
+        os.makedirs(path_reverse_timers)
     if not os.path.isdir(path_scripts_enable):
         os.makedirs(path_scripts_enable)
     if not os.path.isdir(path_scripts_disable):
@@ -420,6 +439,11 @@ if __name__ == "__main__":
         remote_bump()
 
     if args.reset:
+
+        if os.environ.__contains__(phrase_override_env):
+            print("Resetting limits...")
+            remote_reset()
+            exit(0)
 
         print(f"Please type: \"{reset_phrase}\"")
         phrase = input()

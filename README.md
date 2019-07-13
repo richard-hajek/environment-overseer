@@ -130,9 +130,11 @@ Ergo, the total structure is as following:
 │   └── status # Optional
 │       └── <activity>
 ├── timers
-│   └── <activity> # Auto generated, do not create, contains number of seconds activity spent enabled
+│   └── <activity> # Contains number of seconds activity spent enabled
+├── rev_timers
+│   └── <activity> # Contains number of seconds activity has left
 └── status
-    └── <activity>.json # Only exists if the activity is currently enabled
+    └── <activity> # Only exists if the activity is currently enabled
 ```
 
 In examples above `<activity>` is always a single file, named by the activity itself.
