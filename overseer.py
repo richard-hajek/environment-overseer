@@ -53,6 +53,8 @@ path_scripts_status = f"{path_home}/exec/status"
 
 path_pid = f"/run/overseer.pid"
 
+reset_phrase = "I am an addicted idiot and need to reset the timers."
+
 
 def sigusr(_, __):
     bump()
@@ -80,7 +82,8 @@ def reset_timers():
         os.remove(f"{path_status}/{name}")
         run_disable(name)
 
-    for name in os.listdir(f"{path_definitions}"):
+    for activity in os.listdir(f"{path_definitions}"):
+        name = activity.split(".")[0]
         update_time(name, 0)
 
 
@@ -405,9 +408,15 @@ if __name__ == "__main__":
         remote_bump()
 
     if args.reset:
-        print("Resetting limits...")
-        os.chdir(path_home)
-        remote_reset()
+
+        print(f"Please type: \"{reset_phrase}\"")
+        phrase = input()
+
+        if phrase == reset_phrase:
+            print("Resetting limits...")
+            remote_reset()
+        else:
+            print("Failed to type the phrase correctly!")
 
     if args.enable:
         print("Enabling activities...")
