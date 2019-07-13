@@ -167,20 +167,26 @@ def bump(force_run=False):
 
     time_passed = time.time() - bumped_at
     for act_name in last_bump_active_names:
-        activity = activities[act_name]
         activity_time = get_activity_time(act_name) + time_passed
         update_time(act_name, activity_time)
 
-        if activity.__contains__("Limit"):
-            time_left = activity["Limit"] - activity_time
+    for activity in activities:
 
-            if time_left <= 0:
-                time_left = 0
+        if not activity.__contains__("Limit"):
+            continue
 
-            update_rev_time(act_name, time_left)
+        act_name = activity["name"]
+        activity_time = get_activity_time(act_name)
+        
+        time_left = activity["Limit"] - activity_time
 
-            if time_left == 0:
-                to_disable.append(activity)
+        if time_left <= 0:
+            time_left = 0
+
+        update_rev_time(act_name, time_left)
+
+        if time_left == 0:
+            to_disable.append(activity)
 
     bumped_at = time.time()
 
