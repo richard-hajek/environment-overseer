@@ -41,25 +41,6 @@ path_pid = f"/run/overseer.pid"
 reset_phrase = "I am an addicted idiot and need to reset the timers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
-# --------------------------------------------
-# - READ CONSOLE ARGS                        -
-# --------------------------------------------
-
-parser = argparse.ArgumentParser(description="Controls the environment overseer")
-parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
-parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
-parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
-parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
-parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
-parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
-parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
-args = parser.parse_args()
-
-# Prepare global vars
-last_bump_active_names = []
-bumped_at = time.time()
-timer = sched.scheduler(time.time, time.sleep)
-
 
 def sigusr(_, __):
     bump()
@@ -400,6 +381,21 @@ def is_privileged():
 
 
 if __name__ == "__main__":
+
+    last_bump_active_names = []
+    bumped_at = time.time()
+    timer = sched.scheduler(time.time, time.sleep)
+
+    parser = argparse.ArgumentParser(description="Controls the environment overseer")
+    parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
+    parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
+    parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
+    parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
+    parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
+    parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
+    parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
+    args = parser.parse_args()
+
     start_daemon = not args.enable and \
                    not args.disable and \
                    not args.reset and \
