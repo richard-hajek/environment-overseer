@@ -170,14 +170,14 @@ def bump(force_run=False):
         activity_time = get_activity_time(act_name) + time_passed
         update_time(act_name, activity_time)
 
-    for activity in activities:
+    for activity in activities.values():
 
         if not activity.__contains__("Limit"):
             continue
 
         act_name = activity["name"]
         activity_time = get_activity_time(act_name)
-        
+
         time_left = activity["Limit"] - activity_time
 
         if time_left <= 0:
