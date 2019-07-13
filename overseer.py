@@ -20,7 +20,7 @@ parser = argparse.ArgumentParser(description="Controls the environment overseer"
 parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
 parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
 parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
-parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers')
+parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
 parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
 parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
 
@@ -50,6 +50,7 @@ path_timers = f"{path_home}/timers"  # Stores activity usage times
 path_scripts_enable = f"{path_home}/exec/enable"
 path_scripts_disable = f"{path_home}/exec/disable"
 path_scripts_status = f"{path_home}/exec/status"
+path_scripts_trackers = f"{path_home}/exec/trackers"
 
 path_pid = f"/run/overseer.pid"
 
@@ -85,6 +86,8 @@ def reset_timers():
     for activity in os.listdir(f"{path_definitions}"):
         name = activity.split(".")[0]
         update_time(name, 0)
+
+    bump()
 
 
 def bump(force_run=False):
@@ -220,6 +223,13 @@ def bump(force_run=False):
         if directory_active.__contains__(activity):
             directory_active.remove(activity)
 
+    # --------------------------------------------
+    # - EXECUTE TRACKERS                         -
+    # --------------------------------------------
+
+    for tracker in os.listdir(path_scripts_trackers):
+        os.system(tracker)
+    
     # --------------------------------------------
     # - SCHEDULING NEXT BUMP                     -
     # --------------------------------------------
