@@ -414,17 +414,16 @@ if __name__ == "__main__":
         enabled = os.listdir(path_status)
 
         for ls_activity in activities.values():
-            print(ls_activity["name"], end='\t')
+            print(ls_activity["name"], end='\t\t')
             if enabled.__contains__(ls_activity["name"]):
-                print("Enabled", end='\t')
+                print("Enabled!", end='\t')
             else:
                 print("Disabled", end='\t')
 
             print(datetime.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
             print("out of", end='\t')
             print(datetime.timedelta(seconds=ls_activity["Limit"]), end='\t')
-
-            print("\n")
+            print()
         exit(0)
 
     if args.create:
