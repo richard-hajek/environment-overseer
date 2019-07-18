@@ -426,6 +426,7 @@ if __name__ == "__main__":
             print(datetime.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
             print("out of", end='\t')
             print(datetime.timedelta(seconds=ls_activity["Limit"]), end='\t')
+            
             print()
         exit(0)
 
