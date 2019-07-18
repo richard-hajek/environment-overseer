@@ -142,8 +142,4 @@ In examples above `<activity>` is always a single file, named by the activity it
 ##Warning
 
 Neither `overseer` or `overseer -r` will be ran automatically, yet they are designed to be, use systemd or similar to run it automatically.
-`overseer` as `simple` systemd unit type, `overseer -r` as `oneshot`.
-
-Note that it is not very hard to get around it (All you have to do is `overseer -r` and you have access to everything again)
-It is designed to make it more difficult to get to "dangerous" sites ergo when one is feeling lazy, it is not worth going trough all the trouble of
-forcibly enabling it.
+`overseer` as `simple` systemd unit type, `overseer -r` as `oneshot`. You can use example service unit in this repo.

@@ -413,12 +413,17 @@ if __name__ == "__main__":
         activities = parse_activities()
         enabled = os.listdir(path_status)
 
-        for ls_activity in activities:
+        for ls_activity in activities.values():
             print(ls_activity["name"], end='\t')
             if enabled.__contains__(ls_activity["name"]):
                 print("Enabled", end='\t')
             else:
                 print("Disabled", end='\t')
+
+            print(datetime.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
+            print("out of", end='\t')
+            print(datetime.timedelta(seconds=ls_activity["Limit"]), end='\t')
+
             print("\n")
         exit(0)
 

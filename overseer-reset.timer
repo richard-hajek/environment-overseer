@@ -1,0 +1,11 @@
+[Unit]
+Description=Resets the Environment Overseer
+
+
+[Timer]
+OnCalendar=*-*-* 4:00:00
+Persistent=true
+
+
+[Install]
+WantedBy=timers.target
