@@ -417,7 +417,7 @@ if __name__ == "__main__":
             print("No currently configured activities! See README.md for guide")
 
         for ls_activity in activities.values():
-            print(ls_activity["name"], end='\t\t')
+            print(ls_activity["name"], end='\t')
             if enabled.__contains__(ls_activity["name"]):
                 print("Enabled!", end='\t')
             else:
@@ -426,7 +426,7 @@ if __name__ == "__main__":
             print(datetime.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
             print("out of", end='\t')
             print(datetime.timedelta(seconds=ls_activity["Limit"]), end='\t')
-            
+
             print()
         exit(0)
 
