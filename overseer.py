@@ -413,6 +413,9 @@ if __name__ == "__main__":
         activities = parse_activities()
         enabled = os.listdir(path_status)
 
+        if activities.__len__() == 0:
+            print("No currently configured activities! See README.md for guide")
+
         for ls_activity in activities.values():
             print(ls_activity["name"], end='\t\t')
             if enabled.__contains__(ls_activity["name"]):
