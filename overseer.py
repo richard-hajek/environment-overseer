@@ -37,6 +37,7 @@ path_scripts_enable = f"{path_home}/exec/enable"
 path_scripts_disable = f"{path_home}/exec/disable"
 path_scripts_status = f"{path_home}/exec/status"
 path_scripts_trackers = f"{path_home}/exec/trackers"
+path_scripts_triggers = f"{path_home}/exec/triggers"
 path_pid = f"/run/overseer.pid"
 reset_phrase = "I am an addicted idiot and need to reset the timers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
@@ -160,6 +161,19 @@ def bump(force_run=False):
             else:
                 if activity_real_status:
                     to_disable.append(activity)
+
+    triggers = os.listdir(path_scripts_triggers)
+    for activity in activities.values():
+        act_name = activity["name"]
+
+        if triggers.__contains__(act_name):
+            path = f"{path_scripts_triggers}/{act_name}"
+            result = run_script(path)
+
+            if result == 0 and directory_active.__contains__(activity):
+                to_disable.append(activity)
+            elif result == 1 and not directory_active.__contains__(activity):
+                to_enable.append(activity)
 
     # --------------------------------------------
     # - CALCULATING NEW TIMES                    -
@@ -291,8 +305,12 @@ def status_script_exists(act_name):
 
 
 def status_script_run(act_name):
-    script = subprocess.run(f"{path_scripts_status}/{act_name}", stdout=subprocess.PIPE)
-    return script.returncode != 0
+    return run_script(f"{path_scripts_status}/{act_name}") != 0
+
+
+def run_script(script_path):
+    script = subprocess.run(script_path, stdout=subprocess.PIPE)
+    return script.returncode
 
 
 def activity_exists(act_name):
@@ -350,6 +368,8 @@ def create_folders_if_non_existent():
         os.makedirs(path_scripts_disable)
     if not os.path.isdir(path_scripts_status):
         os.makedirs(path_scripts_status)
+    if not os.path.isdir(path_scripts_triggers):
+        os.makedirs(path_scripts_triggers)
     if not os.path.isdir(path_scripts_trackers):
         os.makedirs(path_scripts_trackers)
 

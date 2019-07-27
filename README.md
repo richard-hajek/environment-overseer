@@ -7,6 +7,8 @@ YouTube and record this, possibly block if YouTube's limit was reached.
 
 Overseer is designed to run on a upstream network device (router) to be able to intercept and block traffic. (Tested with PiHole)
 
+Anything can be blocked, as long as you have a script to block it and script to unblock it.
+
 ## Capabilities
 * [X] Manual enabling / disabling of activities
 * [X] Keeping track of activity enabled time
@@ -39,7 +41,7 @@ It's the equivalent of executing `overseer -e` at `AutoStart` or `overseer -d` a
 ###Examples
 ```
 {
-    "Limit": "30M",
+    "Limit": "30M"
 }
 ```
 
@@ -113,13 +115,9 @@ And try `sudo overseer -e youtube`, now if you refresh, YouTube will be enabled!
 
 ## Structure
 
-Anything can be blocked, as long as you have a script to block it and script to unblock it.
-These go to `scripts/enable/<activity>` and `scripts/disable/<activity>`.
-Last file you need is `limits/<activity>` which should contain the time one is allowed to leave an activity enabled, in seconds.
-
-Ergo, the total structure is as following:
+File Structure:
 ```
-/etc/environment-overseer/
+/etc/overseer/
 ├── activities
 │   └── <activity>.json
 ├── exec
@@ -127,19 +125,43 @@ Ergo, the total structure is as following:
 │   │   └── <activity>
 │   ├── enable
 │   │   └── <activity>
-│   └── status # Optional
-│       └── <activity>
+│   ├── status # Optional
+│   │   └── <activity>
+│   └── triggers # Optional
+│       └── <activity>
 ├── timers
-│   └── <activity> # Contains number of seconds activity spent enabled
+│   └── <activity> # Auto generated
 ├── rev_timers
-│   └── <activity> # Contains number of seconds activity has left
+│   └── <activity> # Auto generated
 └── status
-    └── <activity> # Only exists if the activity is currently enabled
+    └── <activity>
 ```
 
 In examples above `<activity>` is always a single file, named by the activity itself.
 
-##Warning
+### Description of file structure:
 
-Neither `overseer` or `overseer -r` will be ran automatically, yet they are designed to be, use systemd or similar to run it automatically.
-`overseer` as `simple` systemd unit type, `overseer -r` as `oneshot`. You can use example service unit in this repo.
+`activities/<activity>.json` - 
+Main configuration file of activity, contains "Limit" and "Auto" timers.
+
+`exec/disable/<activity>` - 
+Script to disable the activity.
+
+`exec/enable/<activity>` - 
+Script to enable the activity.
+
+`exec/status/<activity>` - 
+Used to guard whether the system conditions hadn't changed, e.g. in a process crash.
+This script should examine the system and report whether the activity is actually enabled or disabled, regardless of what overseer thinks.
+If this report will be in conflict with what overseer thinks, overseer will take action to fix it.
+
+`exec/triggers/<activity>` - Script, that if returns 1, the activity will be enabled, 0 activity will be disabled.
+
+`timers/<activity>` - Contains number of seconds an activity spent enabled.
+**Auto generated and managed**
+
+`rev_timers/<activity>` - Contains number of seconds activity has left until limit.
+**Auto generated and managed**
+
+`status/<activity>` - A symlink to `activities/<activity>.json`, represents enabled activity.
+**Managed, but manual interference is possible**
