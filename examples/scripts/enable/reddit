@@ -1,0 +1,3 @@
+#!/usr/bin/bash
+
+pihole --wild -d reddit.com
