@@ -308,8 +308,6 @@ def create_folders_if_non_existent():
         os.makedirs(path_scripts_enable)
     if not os.path.isdir(path_scripts_disable):
         os.makedirs(path_scripts_disable)
-    if not os.path.isdir(path_scripts_check):
-        os.makedirs(path_scripts_check)
     if not os.path.isdir(path_scripts_managers):
         os.makedirs(path_scripts_managers)
     if not os.path.isdir(path_scripts_extensions):
@@ -371,7 +369,7 @@ if __name__ == "__main__":
                    not args.disable and \
                    not args.reset and \
                    not args.list and \
-                   not args.create and \
+                   not args.prepare and \
                    not args.bump
 
     if args.list:
