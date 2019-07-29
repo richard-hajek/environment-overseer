@@ -26,12 +26,12 @@ Clone this repo, executables are in `src`
 
 ## Usage
 
-`overseer`: Start main daemon of the app   
-`overseer -e <activity>`: Enables an activity  
-`overseer -d <activity>`: Disables an activity  
-`overseer -r`: Resets timers for all activities  
-`overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
-`overseer -p`: Prepares Overseer's file structure
+`overseer.py`: Start main daemon of the app   
+`overseer.py -e <activity>`: Enables an activity  
+`overseer.py -d <activity>`: Disables an activity  
+`overseer.py -r`: Resets timers for all activities  
+`overseer.py -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
+`overseer.py -p`: Prepares Overseer's file structure
 
 ## Example configuration on Arch Linux
 
