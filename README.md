@@ -10,108 +10,55 @@ Overseer is designed to run on a upstream network device (router) to be able to 
 Anything can be blocked, as long as you have a script to block it and script to unblock it.
 
 ## Capabilities
-* [X] Manual enabling / disabling of activities
-* [X] Keeping track of activity enabled time
+
+* [X] Automatic tracking of time spent on addiction prone sites
 * [X] Automatic enabling / disabling activities based on time of day
-* [X] Checking whether system is conformant to enable / disable scripts, executing them again if not
+* [X] Automatic enabling / disabling activities based on time spent
+
+## Installation
+
+Arch Linux: 
+- Use [AUR package](https://aur.archlinux.org/packages/environment-overseer-git/)
+
+Other:
+- Run `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
+- `cd environment-overseer`
+- Move *src/overseer.py* into an executable directory `mv src/overseer.py /usr/local/bin/overseer.py`
+- Move *systemd/** into a systemd directory `mv systemd/* /etc/systemd/system`
 
 ## Usage
 
-`overseer`: Start main daemon of the app  
+`overseer`: Start main daemon of the app   
 `overseer -e <activity>`: Enables an activity  
 `overseer -d <activity>`: Disables an activity  
 `overseer -r`: Resets timers for all activities  
 `overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/status`)  
 `overseer -p`: Prepares Overseer's file structure
 
-## JSON Activity Definition
-
-Activity definition must be a `.json` file with `json` structure in folder `/etc/overseer/activities/`.
-Overseer supports following properties:
-
-`Limit`: When activity reaches limit set by this property, it is automatically disabled and it's enabling is blocked. Format must match following `integer{H,h,S,s,M,m}`
-
-`AutoStart`: Activity will be automatically enabled at this time. Time in format `%H:%M`.
-
-`AutoStop`: Activity will be automatically disabled at this time. Same format as `AutoStart`
-
-Note that `AutoStart` and `AutoStop` do not force keep the activity enabled or disabled.
-It's the equivalent of executing `overseer -e` at `AutoStart` or `overseer -d` at `AutoStop`
-
-###Examples
-```
-{
-    "Limit": "30M"
-}
-```
-
-```
-{
-    "Limit": "3H", 
-    "AutoStart":"14:00",
-    "AutoStop":"16:00"
-}
-``` 
-
-## Example configuration
-
-Requisites:
-* Linux device with it's own AP (ArchLinux preferably, but not necessarily)
-* PiHole on this device
-* Overseer
+## Example configuration on Arch Linux
 
 Description:
  * Let's setup blocking of YouTube, allowing it only for 30 minutes a day
+ 
+Requisites:
+* Arch Linux computer capable of hosting an access point
 
-WiFi & PiHole setup:
- * Wireless AP on your Linux machine guide [(link)](https://wiki.archlinux.org/index.php/Software_access_point)
- * PiHole guide [(link)](https://wiki.archlinux.org/index.php/Pi-hole)
-
-Setup Overseer:
-1. Download EnvironmentOverseer
-    * `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
-2. Copy EnvironmentOverseer to executable location
-    * `cd environment-overseer`
-    * `sudo cp overseer /usr/bin/`
-3. Run `overseer -p`
-4. Populate folders in /etc/overseer
-
-##### `/etc/overseer/activities/youtube`
-``` 
-{
-    "Limit": "30M"
-}
-```
-
-##### `/etc/overseer/scripts/exec/youtube`
-```
-#!/usr/bin/bash
-
-pihole -w -nr youtube.com
-pihole -w -nr www.youtube.com
-pihole -w -nr youtubei.googleapis.com
-pihole --wild -d -nr googlevideo.com
-
-pihole restartdns
-```
-
-##### `/etc/overseer/exec/disable/youtube`
-```
-#!/usr/bin/bash
-
-pihole -b -nr youtube.com
-pihole -b -nr www.youtube.com
-pihole -b -nr youtubei.googleapis.com
-pihole --wild -nr googlevideo.com
-
-pihole restartdns
-```
+1. Setup portable WiFi Hotspot, use [this](https://wiki.archlinux.org/index.php/Software_access_point) if necessary
+2. Setup PiHole, use [this](https://wiki.archlinux.org/index.php/Pi-hole) page
+3. Install Overseer
+4. Run `overseer --prepare`
+5. Move example files:
+ - `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
+    - You dont have to do this if you already downloaded the repo in installation
+ - `cd environment-overseer`
+ - `cp examples/activities/youtube.json /etc/overseer/activities/`
+ - `cp examples/scripts/enable/youtube /etc/overseer/scripts/enable/youtube`
+ - `cp examples/scripts/disable/youtube /etc/overseer/scripts/disable/youtube`
+ - `cp examples/scripts/managers/youtube /etc/overseer/scripts/managers/youtube`
 
 Now you are ready!
-Run `sudo overseer &` to start it in background and if you go to your workstation connected to the AP
-you should not have access to YouTube!
 
-And try `sudo overseer -e youtube`, now if you refresh, YouTube will be enabled!
+Connect to your WiFi and you should only get about half an hour of YouTube!
 
 ## Structure
 
@@ -120,48 +67,43 @@ File Structure:
 /etc/overseer/
 ├── activities
 │   └── <activity>.json
-├── exec
+├── status
+│   └── <activity>
+├── scripts
 │   ├── disable
 │   │   └── <activity>
 │   ├── enable
 │   │   └── <activity>
-│   ├── status # Optional
-│   │   └── <activity>
-│   └── triggers # Optional
-│       └── <activity>
-├── timers
+│   ├── managers 
+│   │   └── <activity> # Optional
+│   └── extensions
+│       └── <extension> # Extensions optional
+├── trackers
 │   └── <activity> # Auto generated
-├── rev_timers
-│   └── <activity> # Auto generated
-└── status
-    └── <activity>
+└── reverse-trackers
+    └── <activity> # Auto generated
 ```
-
-In examples above `<activity>` is always a single file, named by the activity itself.
 
 ### Description of file structure:
 
 `activities/<activity>.json` - 
 Main configuration file of activity, contains "Limit" and "Auto" timers.
 
-`exec/disable/<activity>` - 
+`status/<activity>` -
+A symlink to `activities/<activity>.json`, represents enabled activity.
+
+`scripts/disable/<activity>` - 
 Script to disable the activity.
 
-`exec/enable/<activity>` - 
+`scripts/enable/<activity>` - 
 Script to enable the activity.
 
-`exec/status/<activity>` - 
-Used to guard whether the system conditions hadn't changed, e.g. in a process crash.
-This script should examine the system and report whether the activity is actually enabled or disabled, regardless of what overseer thinks.
-If this report will be in conflict with what overseer thinks, overseer will take action to fix it.
+`trackers/<activity>` -
+ Contains number of seconds an activity spent enabled.
 
-`exec/triggers/<activity>` - Script, that if returns 1, the activity will be enabled, 0 activity will be disabled.
+`reverse-trackers/<activity>` -
+ Contains number of seconds activity has left until limit.
 
-`timers/<activity>` - Contains number of seconds an activity spent enabled.
-**Auto generated and managed**
+`scripts/managers/<activity>` -
+Used to control an activity, a script that return 0 if activity should enable or 1 if activity should disable.
 
-`rev_timers/<activity>` - Contains number of seconds activity has left until limit.
-**Auto generated and managed**
-
-`status/<activity>` - A symlink to `activities/<activity>.json`, represents enabled activity.
-**Managed, but manual interference is possible**

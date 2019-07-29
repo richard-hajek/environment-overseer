@@ -1,4 +1,0 @@
-#!/usr/bin/sh
-
-cd /etc/overseer/exec/triggers
-./pihelper "netflix"

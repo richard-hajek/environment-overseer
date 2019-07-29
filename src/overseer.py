@@ -16,6 +16,12 @@ def die(reason):
     exit(exit_codes[reason][0])
 
 
+class STATUS:
+    ENABLED = "enabled"
+    DISABLED = "disabled"
+    READY = "ready"
+
+
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
@@ -29,16 +35,21 @@ exit_codes = {
 }
 
 path_home = "/etc/overseer"
+
 path_definitions = f"{path_home}/activities"
-path_status = f"{path_home}/status"
-path_timers = f"{path_home}/timers"
-path_reverse_timers = f"{path_home}/rev_timers"
-path_scripts_enable = f"{path_home}/exec/enable"
-path_scripts_disable = f"{path_home}/exec/disable"
-path_scripts_status = f"{path_home}/exec/status"
-path_scripts_trackers = f"{path_home}/exec/trackers"
-path_scripts_triggers = f"{path_home}/exec/triggers"
+path_enabled = f"{path_home}/enabled"
+path_ready = f"{path_home}/ready"
+path_trackers = f"{path_home}/trackers"
+path_reverse_trackers = f"{path_home}/reverse-trackers"
+
+path_scripts_enable = f"{path_home}/scripts/enable"
+path_scripts_disable = f"{path_home}/scripts/disable"
+path_scripts_managers = f"{path_home}/scripts/managers"
+
+path_scripts_extensions = f"{path_home}/scripts/extensions"
+
 path_pid = f"/run/overseer.pid"
+
 reset_phrase = "I am an addicted idiot and need to reset the timers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
@@ -52,21 +63,21 @@ def sigusr2(_, __):
 
 
 def link_enable(act_name):
-    if not os.path.islink(f"{path_status}/{act_name}"):
-        os.symlink(f"{path_definitions}/{act_name}", f"{path_status}/{act_name}")
+    if not os.path.islink(f"{path_enabled}/{act_name}"):
+        os.symlink(f"{path_definitions}/{act_name}", f"{path_enabled}/{act_name}")
 
 
 def link_disable(act_name):
-    if os.path.islink(f"{path_status}/{act_name}"):
-        os.remove(f"{path_status}/{act_name}")
+    if os.path.islink(f"{path_enabled}/{act_name}"):
+        os.remove(f"{path_enabled}/{act_name}")
 
 
 def reset_timers():
-    for name in os.listdir(f"{path_timers}"):
-        os.remove(f"{path_timers}/{name}")
+    for name in os.listdir(f"{path_trackers}"):
+        os.remove(f"{path_trackers}/{name}")
 
-    for name in os.listdir(f"{path_status}"):
-        os.remove(f"{path_status}/{name}")
+    for name in os.listdir(f"{path_enabled}"):
+        os.remove(f"{path_enabled}/{name}")
         run_disable(name)
 
     for activity in os.listdir(f"{path_definitions}"):
@@ -76,17 +87,9 @@ def reset_timers():
     bump()
 
 
-def bump(force_run=False):
-    """
-    Searches for newly enabled / disabled activities
-    Searches for activities which ran out of time
-
-    Updates files for usage activities
-
-    :param force_run: Forces bump to run disable or enable scripts of all activities
-    """
-
+def bump():
     global bumped_at
+    global last_states
     global last_bump_active_names
 
     # --------------------------------------------
@@ -99,156 +102,101 @@ def bump(force_run=False):
     create_all_records()
 
     activities = parse_activities()
-
-    directory_active = [activities[act_path.split(".")[0]] for act_path in os.listdir(path_status)]
-    to_enable = []  # Were disabled, now are enabled
-    to_disable = []  # Were enabled, now are disabled
-
-    # --------------------------------------------
-    # - FIND NEWLY ENABLED / DISABLED ACTIVITIES -
-    # --------------------------------------------
-
-    for activity in directory_active:
-        if not last_bump_active_names.__contains__(activity["name"]):
-            to_enable.append(activity)
-
-    for act_name in last_bump_active_names:
-        activity = activities[act_name]
-        if not directory_active.__contains__(activity):
-            to_disable.append(activity)
-
-    # --------------------------------------------
-    # - FIND ACTIVITIES SCHEDULED START / STOP   -
-    # --------------------------------------------
+    enabled_directory = os.listdir(path_enabled)
+    semi_enabled_directory = os.listdir(path_ready)
 
     prev_time = datetime.datetime.fromtimestamp(bumped_at).time()
     now_time = datetime.datetime.now().time()
+    time_passed = time.time() - bumped_at
 
     for activity in activities.values():
 
-        if not activity.__contains__("AutoStart"):
-            continue
+        activity_name = activity["name"]
 
-        start_time = datetime.datetime.strptime(activity["AutoStart"], "%H:%M").time()
+        if last_states.__contains__(activity_name):
+            previous_state = last_states[activity_name]
+        else:
+            run_disable(activity_name)
+            previous_state = STATUS.DISABLED
 
-        if prev_time < start_time <= now_time:
-            if not directory_active.__contains__(activity):
-                to_enable.append(activity)
+        current_state = STATUS.DISABLED
 
-    for activity in activities.values():
+        # --------------------------------------------
+        # - CHECK IF ENABLED / SEMI ENABLED          -
+        # --------------------------------------------
+        if enabled_directory.__contains__(activity_name):
+            current_state = STATUS.ENABLED
 
-        if not activity.__contains__("AutoStop"):
-            continue
+        if semi_enabled_directory.__contains__(activity_name):
+            current_state = STATUS.READY
 
-        stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
-        if prev_time < stop_time <= now_time:
-            if not directory_active.__contains__(activity):
-                to_enable.append(activity)
+        # --------------------------------------------
+        # - CHECK IF ACTIVITY HAS A SCHEDULED ACTION -
+        # --------------------------------------------
 
-    # -----------------------------------------------------------------
-    # - CHECK STATUS SCRIPTS -> FIND IF ANY ACTIVS. STOPPED / STARTED -
-    # -----------------------------------------------------------------
+        if activity.__contains__("AutoStart"):
+            start_time = datetime.datetime.strptime(activity["AutoStart"], "%H:%M").time()
 
-    for activity in activities.values():
+            if prev_time < start_time <= now_time:
+                current_state = STATUS.ENABLED
 
-        if status_script_exists(activity):
+        if activity.__contains__("AutoStop"):
+            stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
 
-            activity_real_status = status_script_run(activity)
+            if prev_time < stop_time <= now_time:
+                current_state = STATUS.DISABLED
 
-            if directory_active.__contains__(activity):
-                if not activity_real_status:
-                    to_enable.append(activity)
-            else:
-                if activity_real_status:
-                    to_disable.append(activity)
+        # --------------------------------------------
+        # - CHECK ACTIVITY MANAGER                   -
+        # --------------------------------------------
 
-    triggers = os.listdir(path_scripts_triggers)
-    for activity in activities.values():
-        act_name = activity["name"]
-
-        if triggers.__contains__(act_name):
-            path = f"{path_scripts_triggers}/{act_name}"
+        if os.path.isfile(f"{path_scripts_managers}/{activity_name}"):
+            path = f"{path_scripts_managers}/{activity_name}"
             result = run_script(path)
 
-            if result == 0 and directory_active.__contains__(activity):
-                to_disable.append(activity)
-            elif result == 1 and not directory_active.__contains__(activity):
-                to_enable.append(activity)
+            if result == 0:
+                current_state = STATUS.DISABLED
+            elif result == 1:
+                current_state = STATUS.READY
+
+        # --------------------------------------------
+        # - CHECK ACTIVITY LIMIT                     -
+        # --------------------------------------------
+
+        activity_time = get_activity_time(activity_name) + time_passed
+        update_time(activity_name, activity_time)
+
+        if activity.__contains__("Limit"):
+            time_left = activity["Limit"] - activity_time
+
+            if time_left <= 0:
+                time_left = 0
+
+            update_rev_time(activity_name, time_left)
+
+            if time_left == 0:
+                current_state = STATUS.DISABLED
+
+        if (current_state == STATUS.ENABLED or current_state == STATUS.READY) and previous_state == STATUS.DISABLED:
+            run_enable(activity_name)
+
+        if current_state == STATUS.DISABLED and (previous_state == STATUS.ENABLED or previous_state == STATUS.READY):
+            run_disable(activity_name)
+
+        last_states[activity_name] = current_state
 
     # --------------------------------------------
-    # - CALCULATING NEW TIMES                    -
+    # - EXECUTE EXTENSIONS                       -
     # --------------------------------------------
 
-    time_passed = time.time() - bumped_at
-    for act_name in last_bump_active_names:
-        activity_time = get_activity_time(act_name) + time_passed
-        update_time(act_name, activity_time)
+    for extension in os.listdir(path_scripts_extensions):
+        os.system(f"{path_scripts_extensions}/{extension}")
 
-    for activity in activities.values():
-
-        if not activity.__contains__("Limit"):
-            continue
-
-        act_name = activity["name"]
-        activity_time = get_activity_time(act_name)
-
-        time_left = activity["Limit"] - activity_time
-
-        if time_left <= 0:
-            time_left = 0
-
-        update_rev_time(act_name, time_left)
-
-        if time_left == 0:
-            to_disable.append(activity)
+    # --------------------------------------------
+    # - PREPARE FOR NEXT BUMP                    -
+    # --------------------------------------------
 
     bumped_at = time.time()
-
-    # --------------------------------------------
-    # - RUNNING ENABLE / DISABLE SCRIPTS         -
-    # --------------------------------------------
-
-    # Remove duplicates
-    # Add forced runs
-    for activity in activities.values():
-        if to_enable.__contains__(activity) and to_disable.__contains__(activity):
-            to_enable.remove(activity)
-            to_disable.remove(activity)
-
-    if force_run:
-        for activity in activities.values():
-            if directory_active.__contains__(activity) and not to_enable.__contains__(activity):
-                to_enable.append(activity)
-            if not directory_active.__contains__(activity) and not to_disable.__contains__(activity):
-                to_disable.append(activity)
-
-    for activity in to_enable:
-        run_enable(activity["name"])
-        link_enable(activity["name"])
-
-        if not directory_active.__contains__(activity):
-            directory_active.append(activity)
-
-    for activity in to_disable:
-        run_disable(activity["name"])
-        link_disable(activity["name"])
-
-        if directory_active.__contains__(activity):
-            directory_active.remove(activity)
-
-    # --------------------------------------------
-    # - EXECUTE TRACKERS                         -
-    # --------------------------------------------
-
-    for tracker in os.listdir(path_scripts_trackers):
-        os.system(f"{path_scripts_trackers}/{tracker}")
-
-    # --------------------------------------------
-    # - SCHEDULING NEXT BUMP                     -
-    # --------------------------------------------
-
-    last_bump_active_names = [activity["name"] for activity in directory_active]
-
     next_bump = 60
     print(f"Scheduling next bump in {next_bump} seconds")
     timer.enter(next_bump, 1, bump)
@@ -300,14 +248,6 @@ def run_disable(act_name):
     os.system(f"{path_scripts_disable}/{act_name}")
 
 
-def status_script_exists(act_name):
-    return os.listdir(path_scripts_status).__contains__(act_name)
-
-
-def status_script_run(act_name):
-    return run_script(f"{path_scripts_status}/{act_name}") != 0
-
-
 def run_script(script_path):
     script = subprocess.run(script_path, stdout=subprocess.PIPE)
     return script.returncode
@@ -318,7 +258,7 @@ def activity_exists(act_name):
 
 
 def get_activity_time(act_name):
-    path = f"{path_timers}/{act_name}"
+    path = f"{path_trackers}/{act_name}"
     with open(path, 'r') as content_file:
         time_spent = content_file.read()
     time_spent = float(time_spent)
@@ -332,7 +272,7 @@ def create_all_records():
 
 
 def create_record_if_non_existent(act_name):
-    path = f"{path_timers}/{act_name}"
+    path = f"{path_trackers}/{act_name}"
 
     if os.path.isfile(path):
         return
@@ -342,12 +282,12 @@ def create_record_if_non_existent(act_name):
 
 
 def update_time(act_name, seconds):
-    with open(f"{path_timers}/{act_name}", 'w') as file:
+    with open(f"{path_trackers}/{act_name}", 'w') as file:
         file.write(str(int(seconds)))
 
 
 def update_rev_time(act_name, seconds):
-    with open(f"{path_reverse_timers}/{act_name}", 'w') as file:
+    with open(f"{path_reverse_trackers}/{act_name}", 'w') as file:
         file.write(str(int(seconds)))
 
 
@@ -356,22 +296,24 @@ def create_folders_if_non_existent():
         os.makedirs(path_home)
     if not os.path.isdir(path_definitions):
         os.makedirs(path_definitions)
-    if not os.path.isdir(path_status):
-        os.makedirs(path_status)
-    if not os.path.isdir(path_timers):
-        os.makedirs(path_timers)
-    if not os.path.isdir(path_reverse_timers):
-        os.makedirs(path_reverse_timers)
+    if not os.path.isdir(path_enabled):
+        os.makedirs(path_enabled)
+    if not os.path.isdir(path_ready):
+        os.makedirs(path_ready)
+    if not os.path.isdir(path_trackers):
+        os.makedirs(path_trackers)
+    if not os.path.isdir(path_reverse_trackers):
+        os.makedirs(path_reverse_trackers)
     if not os.path.isdir(path_scripts_enable):
         os.makedirs(path_scripts_enable)
     if not os.path.isdir(path_scripts_disable):
         os.makedirs(path_scripts_disable)
-    if not os.path.isdir(path_scripts_status):
-        os.makedirs(path_scripts_status)
-    if not os.path.isdir(path_scripts_triggers):
-        os.makedirs(path_scripts_triggers)
-    if not os.path.isdir(path_scripts_trackers):
-        os.makedirs(path_scripts_trackers)
+    if not os.path.isdir(path_scripts_check):
+        os.makedirs(path_scripts_check)
+    if not os.path.isdir(path_scripts_managers):
+        os.makedirs(path_scripts_managers)
+    if not os.path.isdir(path_scripts_extensions):
+        os.makedirs(path_scripts_extensions)
 
 
 def remote_bump():
@@ -409,6 +351,9 @@ def is_privileged():
 if __name__ == "__main__":
 
     last_bump_active_names = []
+
+    last_states = {}
+
     bumped_at = time.time()
     timer = sched.scheduler(time.time, time.sleep)
 
@@ -417,7 +362,7 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--disable', nargs='+', help='Disables an activity')
     parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
     parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
-    parser.add_argument('-c', '--create', action='store_true', help='Creates the file structure')
+    parser.add_argument('-p', '--prepare', action='store_true', help='Prepares the file structure')
     parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
     parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
     args = parser.parse_args()
@@ -431,7 +376,7 @@ if __name__ == "__main__":
 
     if args.list:
         activities = parse_activities()
-        enabled = os.listdir(path_status)
+        enabled = os.listdir(path_enabled)
 
         if activities.__len__() == 0:
             print("No currently configured activities! See README.md for guide")
