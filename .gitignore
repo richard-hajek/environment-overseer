@@ -1,8 +1,4 @@
 .idea
 __pycache__
-activities
-exec
-status
-timers
 aur/*
 !aur/PKGBUILD
