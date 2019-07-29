@@ -1,0 +1,37 @@
+# Maintainer: Ari Mewosiku <meowiik at gmail dot com>
+pkgname=environment-overseer-git
+pkgver=0.9
+pkgrel=1
+pkgdesc="Real time environment manager, used primarily to supress adictive sites"
+arch=('any')
+url="https://gitlab.com/meowxiik/environment-overseer"
+license=('GPL')
+depends=('python')
+source=("$pkgname::git+https://gitlab.com/meowxiik/environment-overseer.git/")
+md5sums=('SKIP')
+validpgpkeys=()
+
+#prepare() {
+	echo prepare
+#	cd "$pkgname-$pkgver"
+#	patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
+#}
+
+#build() {
+	echo build
+#	cd "$pkgname-$pkgver"
+#	./configure --prefix=/usr
+#	make
+#}
+
+#check() {
+#	echo check
+#	cd "$pkgname-$pkgver"
+#	make -k check
+#}
+
+package() {
+	echo package
+#	cd "$pkgname-$pkgver"
+#	make DESTDIR="$pkgdir/" install
+}

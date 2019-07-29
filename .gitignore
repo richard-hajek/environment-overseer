@@ -4,3 +4,5 @@ activities
 exec
 status
 timers
+aur/*
+!aur/PKGBUILD
