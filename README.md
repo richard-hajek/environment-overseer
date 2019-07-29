@@ -51,7 +51,7 @@ Description:
  - `cp examples/scripts/disable/youtube /etc/overseer/scripts/disable/youtube`
  - `cp examples/scripts/managers/youtube /etc/overseer/scripts/managers/youtube`
 
-Now you are ready!
+Now you are ready! Try watching YouTube, you should only get around 30 minutes of YouTube!
 
 
 ## Structure
