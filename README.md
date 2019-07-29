@@ -5,8 +5,6 @@ This small Python script allows one to execute other scripts based on environmen
 Goal of this project is to limit my own procrastination, using scripts to detect if one is for example watching 
 YouTube and record this, possibly block if YouTube's limit was reached.
 
-Overseer is designed to run on a upstream network device (router) to be able to intercept and block traffic. (Tested with PiHole)
-
 Anything can be blocked, as long as you have a script to block it and script to unblock it.
 
 ## Capabilities
@@ -37,6 +35,7 @@ Clone this repo, executables are in `src`
 
 Description:
  * Let's setup blocking of YouTube, allowing it only for 30 minutes a day, using Pi-hole
+ * Follow these steps on a machine that will be the **DNS server**
 
 1. Setup Pi-hole, use [ArchWiki - Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole)
  - Step [Making devices use Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole#Making_devices_use_Pi-hole) is very important.
