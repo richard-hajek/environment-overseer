@@ -1,0 +1,8 @@
+#!/usr/bin/bash
+
+pihole -b -nr youtube.com
+pihole -b -nr www.youtube.com
+pihole -b -nr youtubei.googleapis.com
+pihole --wild -nr googlevideo.com
+
+pihole restartdns
