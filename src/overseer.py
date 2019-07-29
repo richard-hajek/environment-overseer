@@ -393,7 +393,7 @@ if __name__ == "__main__":
             print()
         exit(0)
 
-    if args.create:
+    if args.prepare:
         print(f"Creating folder structure in {path_home}")
         create_folders_if_non_existent()
         exit(0)
