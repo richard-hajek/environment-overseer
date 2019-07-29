@@ -19,13 +19,13 @@ for activity in /etc/overseer/activities/*; do
 	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "active,activity=$ACT_NAME value=$ACTIVE $TIMESTAMP"
 done
 
-for activity in /etc/overseer/timers/*; do
+for activity in /etc/overseer/trackers/*; do
 	TIMEUSED=$(cat $activity)
 	ACT_NAME=`basename $activity`
 	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "timeTracked,activity=$ACT_NAME value=$TIMEUSED $TIMESTAMP"
 done
 
-for activity in /etc/overseer/rev_timers/*; do
+for activity in /etc/overseer/reverse-trackers/*; do
 	TIMELEFT=$(cat $activity)
 	ACT_NAME=`basename $activity`
 	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "timeLeft,activity=$ACT_NAME value=$TIMELEFT $TIMESTAMP"
