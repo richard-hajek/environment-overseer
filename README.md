@@ -37,15 +37,11 @@ Clone this repo, executables are in `src`
 
 Description:
  * Let's setup blocking of YouTube, allowing it only for 30 minutes a day
- 
-Requisites:
-* Arch Linux device capable of hosting an access point
 
-1. Setup portable WiFi Hotspot, use [this](https://wiki.archlinux.org/index.php/Software_access_point) if necessary
-2. Setup PiHole, use [this](https://wiki.archlinux.org/index.php/Pi-hole) page
-3. Install Overseer
-4. Run `overseer --prepare`
-5. Move example files:
+1. Setup PiHole, use [this](https://wiki.archlinux.org/index.php/Pi-hole) page
+2. Install Overseer
+3. Run `overseer --prepare`
+4. Move example files:
  - `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
     - You dont have to do this if you already downloaded the repo in installation
  - `cd environment-overseer`
