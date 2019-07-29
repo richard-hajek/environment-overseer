@@ -5,7 +5,7 @@ This small Python script allows one to execute other scripts based on environmen
 Goal of this project is to limit my own procrastination, using scripts to detect if one is for example watching 
 YouTube and record this, possibly block if YouTube's limit was reached.
 
-Anything can be blocked, as long as you have a script to block it and script to unblock it.
+This script is designed to run on a DNS server with Pi-hole installed.
 
 ## Capabilities
 
@@ -50,7 +50,8 @@ Description:
  - `cp examples/scripts/disable/youtube /etc/overseer/scripts/disable/youtube`
  - `cp examples/scripts/managers/youtube /etc/overseer/scripts/managers/youtube`
 
-Now you are ready! Try watching YouTube, you should only get around 30 minutes of YouTube!
+Now you are ready!
+Switch to the DNS server and try watching YouTube, you should only get around 30 minutes!
 
 Other example configurations include: Discord, Facebook, Netflix, Reddit
 
@@ -83,7 +84,7 @@ File Structure:
 ### Description of file structure:
 
 `activities/<activity>.json` - 
-Main configuration file of activity, contains "Limit" and "Auto" timers.
+Main configuration file of activity, contains "Limit" and "AutoStart" and "AutoStop".
 
 `enabled/<activity>` -
 A symlink to `activities/<activity>.json`, represents enabled activity.
