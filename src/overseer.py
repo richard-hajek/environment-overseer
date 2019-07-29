@@ -155,9 +155,9 @@ def bump():
             result = run_script(path)
 
             if result == 0:
-                current_state = STATUS.DISABLED
-            elif result == 1:
                 current_state = STATUS.READY
+            elif result == 1:
+                current_state = STATUS.ENABLED
 
         # --------------------------------------------
         # - CHECK ACTIVITY LIMIT                     -
