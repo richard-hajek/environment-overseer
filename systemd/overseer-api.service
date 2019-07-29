@@ -1,8 +1,0 @@
-[Unit]
-Description=Environment Overseer Daemon
-
-[Service]
-ExecStart=overseer-rest-api.py
-
-[Install]
-WantedBy=multi-user.target

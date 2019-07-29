@@ -4,7 +4,7 @@ Description=Resets the Environment Overseer
 [Service]
 Type=oneshot
 Environment="OVERSEER_PHRASE_OVERRIDE=1"
-ExecStart=overseer.py -r
+ExecStart=overseer -r
 
 [Install]
 WantedBy=multi-user.target

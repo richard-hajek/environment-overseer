@@ -177,10 +177,11 @@ def bump():
         # - CHECK ACTIVITY LIMIT                     -
         # --------------------------------------------
 
-        activity_time = get_activity_time(activity_name) + time_passed
-        update_time(activity_name, activity_time)
-
         if activity.__contains__("Limit") and current_state == STATUS.ENABLED:
+            activity_time = get_activity_time(activity_name) + time_passed
+
+            update_time(activity_name, activity_time)
+
             time_left = activity["Limit"] - activity_time
 
             if time_left <= 0:
