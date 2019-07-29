@@ -66,8 +66,22 @@ def link_enable(act_name):
     if not os.path.islink(f"{path_enabled}/{act_name}"):
         os.symlink(f"{path_definitions}/{act_name}", f"{path_enabled}/{act_name}")
 
+    if os.path.islink(f"{path_ready}/{act_name}"):
+        os.remove(f"{path_ready}/{act_name}")
+
 
 def link_disable(act_name):
+    if os.path.islink(f"{path_enabled}/{act_name}"):
+        os.remove(f"{path_enabled}/{act_name}")
+
+    if os.path.islink(f"{path_ready}/{act_name}"):
+        os.remove(f"{path_ready}/{act_name}")
+
+
+def link_ready(act_name):
+    if os.path.islink(f"{path_ready}/{act_name}"):
+        os.remove(f"{path_ready}/{act_name}")
+
     if os.path.islink(f"{path_enabled}/{act_name}"):
         os.remove(f"{path_enabled}/{act_name}")
 
@@ -182,6 +196,15 @@ def bump():
 
         if current_state == STATUS.DISABLED and (previous_state == STATUS.ENABLED or previous_state == STATUS.READY):
             run_disable(activity_name)
+
+        if current_state == STATUS.ENABLED:
+            link_enable(activity_name)
+
+        if current_state == STATUS.READY:
+            link_ready(activity_name)
+
+        if current_state == STATUS.DISABLED:
+            link_disable(activity_name)
 
         last_states[activity_name] = current_state
 
