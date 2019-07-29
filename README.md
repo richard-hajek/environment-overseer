@@ -36,11 +36,12 @@ Clone this repo, executables are in `src`
 ## Example configuration on Arch Linux
 
 Description:
- * Let's setup blocking of YouTube, allowing it only for 30 minutes a day
+ * Let's setup blocking of YouTube, allowing it only for 30 minutes a day, using Pi-hole
 
-1. Setup PiHole, use [this](https://wiki.archlinux.org/index.php/Pi-hole) page
+1. Setup Pi-hole, use [ArchWiki - Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole)
+ - Step [Making devices use Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole#Making_devices_use_Pi-hole) is very important.
 2. Install Overseer
-3. Run `overseer --prepare`
+3. Run `overseer.py --prepare`
 4. Move example files:
  - `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
     - You dont have to do this if you already downloaded the repo in installation
@@ -52,7 +53,6 @@ Description:
 
 Now you are ready!
 
-Connect to your WiFi and you should only get about half an hour of YouTube!
 
 ## Structure
 
