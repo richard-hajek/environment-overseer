@@ -14,17 +14,15 @@ Anything can be blocked, as long as you have a script to block it and script to 
 * [X] Automatic tracking of time spent on addiction prone sites
 * [X] Automatic enabling / disabling activities based on time of day
 * [X] Automatic enabling / disabling activities based on time spent
+* [X] Manual enabling / disabling activities
 
 ## Installation
 
-Arch Linux: 
-- Use [AUR package](https://aur.archlinux.org/packages/environment-overseer-git/)
+Arch Linux:
+Use [AUR package](https://aur.archlinux.org/packages/environment-overseer-git/)
 
-Other:
-- Run `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
-- `cd environment-overseer`
-- Move *src/overseer.py* into an executable directory `mv src/overseer.py /usr/local/bin/overseer.py`
-- Move *systemd/** into a systemd directory `mv systemd/* /etc/systemd/system`
+Others:
+Clone this repo, executables are in `src`
 
 ## Usage
 
@@ -32,7 +30,7 @@ Other:
 `overseer -e <activity>`: Enables an activity  
 `overseer -d <activity>`: Disables an activity  
 `overseer -r`: Resets timers for all activities  
-`overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/status`)  
+`overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
 `overseer -p`: Prepares Overseer's file structure
 
 ## Example configuration on Arch Linux
@@ -41,7 +39,7 @@ Description:
  * Let's setup blocking of YouTube, allowing it only for 30 minutes a day
  
 Requisites:
-* Arch Linux computer capable of hosting an access point
+* Arch Linux device capable of hosting an access point
 
 1. Setup portable WiFi Hotspot, use [this](https://wiki.archlinux.org/index.php/Software_access_point) if necessary
 2. Setup PiHole, use [this](https://wiki.archlinux.org/index.php/Pi-hole) page
@@ -105,5 +103,5 @@ Script to enable the activity.
  Contains number of seconds activity has left until limit.
 
 `scripts/managers/<activity>` -
-Used to control an activity, a script that return 0 if activity should enable or 1 if activity should disable.
-
+Used to watch an activity. It is a script that should return 0 if activity should enable
+or 1 if activity should be in stand-by state.
