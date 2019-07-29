@@ -42,10 +42,10 @@ Description:
  - Step [Making devices use Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole#Making_devices_use_Pi-hole) is very important.
 2. Install Overseer
 3. Run `overseer.py --prepare`
-4. Move example files:
+4. Clone the repo
  - `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
-    - You dont have to do this if you already downloaded the repo in installation
  - `cd environment-overseer`
+5. Copy example files
  - `cp examples/activities/youtube.json /etc/overseer/activities/`
  - `cp examples/scripts/enable/youtube /etc/overseer/scripts/enable/youtube`
  - `cp examples/scripts/disable/youtube /etc/overseer/scripts/disable/youtube`
@@ -53,6 +53,7 @@ Description:
 
 Now you are ready! Try watching YouTube, you should only get around 30 minutes of YouTube!
 
+Other example configurations include: Discord, Facebook, Netflix, Reddit
 
 ## Structure
 
