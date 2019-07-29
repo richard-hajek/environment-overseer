@@ -2,7 +2,7 @@
 Description=Environment Overseer Daemon
 
 [Service]
-ExecStart=overseer
+ExecStart=overseer-rest-api.py
 
 [Install]
 WantedBy=multi-user.target

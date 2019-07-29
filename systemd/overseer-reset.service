@@ -4,9 +4,7 @@ Description=Resets the Environment Overseer
 [Service]
 Type=oneshot
 Environment="OVERSEER_PHRASE_OVERRIDE=1"
-# !! Make sure that 'overseer' is in path!
-# E.g. symlink your overseer.py to /usr/local/bin/overseer
-ExecStart=overseer -r
+ExecStart=overseer.py -r
 
 [Install]
 WantedBy=multi-user.target
