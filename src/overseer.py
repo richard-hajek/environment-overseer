@@ -455,7 +455,7 @@ if __name__ == "__main__":
 
         signal.signal(signal.SIGUSR1, sigusr)
         signal.signal(signal.SIGUSR2, sigusr2)
-        bump(force_run=True)
+        bump()
         with open(path_pid, "w") as pidf:
             pidf.write(str(os.getpid()))
             pidf.close()
