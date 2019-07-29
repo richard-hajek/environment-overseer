@@ -61,7 +61,9 @@ File Structure:
 /etc/overseer/
 ├── activities
 │   └── <activity>.json
-├── status
+├── enabled
+│   └── <activity>
+├── ready
 │   └── <activity>
 ├── scripts
 │   ├── disable
@@ -83,8 +85,12 @@ File Structure:
 `activities/<activity>.json` - 
 Main configuration file of activity, contains "Limit" and "Auto" timers.
 
-`status/<activity>` -
+`enabled/<activity>` -
 A symlink to `activities/<activity>.json`, represents enabled activity.
+
+`ready/<activity>` -
+A symlink to `activities/<activity>.json`, represents a stand-by activity.
+(Activity which is Enabled, but is not used and is not being counted)
 
 `scripts/disable/<activity>` - 
 Script to disable the activity.
