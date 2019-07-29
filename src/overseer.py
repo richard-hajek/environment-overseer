@@ -169,9 +169,9 @@ def bump():
             result = run_script(path)
 
             if result == 0:
-                current_state = STATUS.READY
-            elif result == 1:
                 current_state = STATUS.ENABLED
+            elif result == 1:
+                current_state = STATUS.READY
 
         # --------------------------------------------
         # - CHECK ACTIVITY LIMIT                     -
@@ -191,10 +191,13 @@ def bump():
             if time_left == 0:
                 current_state = STATUS.DISABLED
 
-        if (current_state == STATUS.ENABLED or current_state == STATUS.READY) and previous_state == STATUS.DISABLED:
+        if current_state == STATUS.ENABLED and previous_state == STATUS.DISABLED:
             run_enable(activity_name)
 
-        elif current_state == STATUS.DISABLED and (previous_state == STATUS.ENABLED or previous_state == STATUS.READY):
+        elif current_state == STATUS.READY and previous_state == STATUS.DISABLED:
+            run_enable(activity_name)
+
+        elif current_state == STATUS.DISABLED and previous_state != STATUS.DISABLED:
             run_disable(activity_name)
 
         if current_state == STATUS.ENABLED:
