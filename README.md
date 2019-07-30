@@ -51,6 +51,7 @@ Description:
  - `cp examples/scripts/enable/youtube /etc/overseer/scripts/enable/youtube`
  - `cp examples/scripts/disable/youtube /etc/overseer/scripts/disable/youtube`
  - `cp examples/scripts/managers/youtube /etc/overseer/scripts/managers/youtube`
+6. Start the Overseer! `sudo systemctl enable overseer` or simply `overseer`.
 
 Now you are ready!
 Switch to the DNS server and try watching YouTube, you should only get around 30 minutes!
