@@ -20,18 +20,20 @@ Arch Linux:
 Use [AUR package](https://aur.archlinux.org/packages/environment-overseer-git/)
 
 Others:
-Clone this repo, executables are in `src`
+1. Clone this repo
+2. Copy executable from `src` to your preferred directory in PATH
+3. (Recommended) Copy systemd units from `systemd` to `/etc/systemd/system`
 
 ## Usage
 
-`overseer.py`: Start main daemon of the app   
-`overseer.py -e <activity>`: Enables an activity  
-`overseer.py -d <activity>`: Disables an activity  
-`overseer.py -r`: Resets timers for all activities  
-`overseer.py -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
-`overseer.py -p`: Prepares Overseer's file structure
+`overseer`: Start main daemon of the app   
+`overseer -e <activity>`: Enables an activity  
+`overseer -d <activity>`: Disables an activity  
+`overseer -r`: Resets timers for all activities  
+`overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
+`overseer -p`: Prepares Overseer's file structure
 
-## Example configuration on Arch Linux
+## Example configuration
 
 Description:
  * Let's setup blocking of YouTube, allowing it only for 30 minutes a day, using Pi-hole
@@ -40,7 +42,7 @@ Description:
 1. Setup Pi-hole, use [ArchWiki - Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole)
  - Step [Making devices use Pi-hole](https://wiki.archlinux.org/index.php/Pi-hole#Making_devices_use_Pi-hole) is very important.
 2. Install Overseer
-3. Run `overseer.py --prepare`
+3. Run `overseer --prepare`
 4. Clone the repo
  - `git clone https://gitlab.com/meowxiik/environment-overseer.git/`
  - `cd environment-overseer`
