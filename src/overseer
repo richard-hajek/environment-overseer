@@ -410,6 +410,7 @@ if __name__ == "__main__":
     if args.list:
         activities = parse_activities()
         enabled = os.listdir(path_enabled)
+        ready = os.listdir(path_ready)
 
         if activities.__len__() == 0:
             print("No currently configured activities! See README.md for guide")
@@ -418,6 +419,8 @@ if __name__ == "__main__":
             print(ls_activity["name"], end='\t')
             if enabled.__contains__(ls_activity["name"]):
                 print("Enabled!", end='\t')
+            elif ready.__contains__(ls_activity["name"]):
+                print("Standby!")
             else:
                 print("Disabled", end='\t')
 
@@ -468,6 +471,11 @@ if __name__ == "__main__":
         for a in args.enable:
             if activity_exists(a):
                 link_enable(a)
+
+                if os.path.isfile(f"{path_scripts_managers}/{a}"):
+                    print(f"Activity {a} is managed by {path_scripts_managers}/{a}, "
+                          "your decision to enable it will be overridden in around a minute.")
+
             else:
                 print(f"Did not find '{a}' activity")
         remote_bump()
@@ -478,6 +486,11 @@ if __name__ == "__main__":
         for a in args.disable:
             if activity_exists(a):
                 link_disable(a)
+
+                if os.path.isfile(f"{path_scripts_managers}/{a}"):
+                    print(f"Activity {a} is managed by {path_scripts_managers}/{a}, "
+                          "your decision to disable it will be overridden in around a minute.")
+
             else:
                 print(f"Did not find '{a}' activity")
         remote_bump()

@@ -1,11 +1,14 @@
 # Environment Overseer
 
-This small Python script allows one to execute other scripts based on environment conditions.
+This small Python script allows one to execute arbitrary scripts based on environment conditions.
 
-Goal of this project is to limit my own procrastination, using scripts to detect if one is for example watching 
-YouTube and record this, possibly block if YouTube's limit was reached.
+Goal of this project is to limit my own procrastination.
 
-This script is designed to run on a DNS server with Pi-hole installed.
+Example:
+ - Script `scripts/managers/youtube` reports seeing YouTube requests in Pi-hole's log
+ - Overseer will consider the activity `YouTube` as enabled, counting the time it has spent enabled
+ - After YouTube's limit was reached, Overseer will execute `scripts/disable/youtube`
+ and consider YouTube disabled
 
 ## Capabilities
 
@@ -27,9 +30,9 @@ Others:
 ## Usage
 
 `overseer`: Start main daemon of the app   
-`overseer -e <activity>`: Enables an activity  
-`overseer -d <activity>`: Disables an activity  
-`overseer -r`: Resets timers for all activities  
+`overseer -e <activity>`: Manually enables an activity  
+`overseer -d <activity>`: Manually disables an activity  
+`overseer -r`: Resets trackers for all activities  
 `overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
 `overseer -p`: Prepares Overseer's file structure
 
