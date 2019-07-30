@@ -110,3 +110,41 @@ Script to enable the activity.
 `scripts/managers/<activity>` -
 Used to watch an activity. It is a script that should return 0 if activity should enable
 or 1 if activity should be in stand-by state.
+
+### Creating your own scripts
+
+1. Create `json` definition file.   
+
+This file has to be named `<activity_name>.json` and must be placed inside `/etc/overseer/activities`.
+This file has to contain either `Limit` property or `AutoStart` and `AutoStop` properties.
+
+```json
+{
+	"AutoStart": "08:20",
+	"AutoStop": "09:00"
+}
+```
+
+```json
+{
+	"Limit": "1H"
+}
+```
+
+2. Create enable and disable scripts.  
+
+These must go to `/etc/overseer/scripts/enable` and `/etc/overseer/scripts/disable` respectively.
+Their names must match the activity's.
+No return value is expected from these scripts.
+Once this script runs, activity is considered to have changed state.
+
+3. (Recommended) Create a manager script
+
+This script is used for automatic enabling / disabling of activities.
+The job of this script is to report whether user wants to use a site.
+This script must go to `/etc/overseer/scripts/managers`.
+It's name must match the activity's.
+If the script returns `0` activity is enabled, if the script returns `1` activity is disabled.
+Usually what I do is `tail` the DNS log of Pi-hole to see if the site is in use, attempt to enable if yes.
+(Overseer will watch the limit on it's own, it is not the job of this script, that is, 
+this script should try to enable the activity even if it is out of limit)
