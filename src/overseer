@@ -183,8 +183,8 @@ def bump():
 
             if current_state == STATUS.ENABLED:
                 updated_time = activity_time + time_passed
-                update_time(activity_name, activity_time)
                 activity_time = updated_time
+                update_time(activity_name, activity_time)
 
             time_left = activity["Limit"] - activity_time
 
