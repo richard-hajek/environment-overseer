@@ -139,15 +139,15 @@ def bump():
         current_state = STATUS.DISABLED
 
         # --------------------------------------------
-        # - CHECK IF ENABLED / SEMI ENABLED          -
+        # - CHECK IF ENABLED                         -
         # --------------------------------------------
         if enabled_directory.__contains__(activity_name):
             current_state = STATUS.ENABLED
             decisions.append("ENABLE (File link)")
 
-        if semi_enabled_directory.__contains__(activity_name):
-            current_state = STATUS.READY
-            decisions.append("READY (File link)")
+        #if semi_enabled_directory.__contains__(activity_name):
+        #    current_state = STATUS.READY
+        #    decisions.append("READY (File link)")
 
         if first_run:
             previous_state = current_state
@@ -238,7 +238,7 @@ def bump():
             link_disable(activity_name)
 
         print(f"{activity_name}", end=" ")
-        
+
         if current_state == previous_state:
             print(f"stayed in {current_state} state", end=" ")
         else:
