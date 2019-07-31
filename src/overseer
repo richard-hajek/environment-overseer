@@ -183,7 +183,7 @@ def bump():
                 decisions.append("ENABLE (Manager script)")
             elif result == 1:
                 current_state = STATUS.READY
-                decisions.append("DISABLE (Manager script)")
+                decisions.append("READY (Manager script)")
 
         # --------------------------------------------
         # - CHECK ACTIVITY LIMIT                     -
@@ -254,7 +254,7 @@ def bump():
 
     for extension in os.listdir(path_scripts_extensions):
         code = os.system(f"{path_scripts_extensions}/{extension} > /dev/null 2>&1")
-        code = str(int(int(code) / 256))
+        code = int(int(code) / 256)
         print(f"Extensions {extension} returned {code}")
 
     # --------------------------------------------
@@ -305,19 +305,19 @@ def parse_activities():
 
 def run_enable(act_name):
     code = os.system(f"{path_scripts_enable}/{act_name} > /dev/null 2>&1")
-    code = str(int(int(code) / 256))
+    code = int(int(code) / 256)
     print(f"Enable for {act_name}, returned {code}")
 
 
 def run_disable(act_name):
     code = os.system(f"{path_scripts_disable}/{act_name} > /dev/null 2>&1")
-    code = str(int(int(code) / 256))
+    code = int(int(code) / 256)
     print(f"Disable for {act_name}, returned {code}")
 
 
 def run_script(script_path):
     code = os.system(f"{script_path} > /dev/null 2>&1")
-    code = str(int(int(code) / 256))
+    code = int(int(code) / 256)
     print(f"{script_path}, returned {code}")
     return code
 
