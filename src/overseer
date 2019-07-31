@@ -237,7 +237,7 @@ def bump():
         if current_state == STATUS.DISABLED:
             link_disable(activity_name)
 
-        print(f"{activity_name}", end=" ")
+        print(f"[STATUS] {activity_name}", end=" ")
 
         if current_state == previous_state:
             print(f"stayed in {current_state} state", end=" ")
@@ -255,7 +255,7 @@ def bump():
     for extension in os.listdir(path_scripts_extensions):
         code = os.system(f"{path_scripts_extensions}/{extension} > /dev/null 2>&1")
         code = int(int(code) / 256)
-        print(f"Extension {extension} returned {code}")
+        print(f"[EXTENSION] {extension} returned {code}")
 
     # --------------------------------------------
     # - PREPARE FOR NEXT BUMP                    -
@@ -306,19 +306,19 @@ def parse_activities():
 def run_enable(act_name):
     code = os.system(f"{path_scripts_enable}/{act_name} > /dev/null 2>&1")
     code = int(int(code) / 256)
-    print(f"Enable for {act_name}, returned {code}")
+    print(f"[ENABLE] for {act_name}, returned {code}")
 
 
 def run_disable(act_name):
     code = os.system(f"{path_scripts_disable}/{act_name} > /dev/null 2>&1")
     code = int(int(code) / 256)
-    print(f"Disable for {act_name}, returned {code}")
+    print(f"[DISABLE] for {act_name}, returned {code}")
 
 
 def run_script(script_path):
     code = os.system(f"{script_path} > /dev/null 2>&1")
     code = int(int(code) / 256)
-    print(f"{script_path}, returned {code}")
+    print(f"[SCRIPT] {script_path}, returned {code}")
     return code
 
 
