@@ -240,11 +240,11 @@ def bump():
         print(f"[STATUS] {activity_name}", end=" ")
 
         if current_state == previous_state:
-            print(f"stayed in {current_state} state", end=" ")
+            print(f"stayed in {current_state} state", end=", ")
         else:
-            print(f"changed from {previous_state} to {current_state}", end=" ")
+            print(f"changed from {previous_state} to {current_state}", end=", ")
 
-        print(f"decisions was based on: {', '.join(decisions)}")
+        print(f"decisions was based on: {', '.join(decisions)}", end="\n\n")
 
         last_states[activity_name] = current_state
 
@@ -306,13 +306,13 @@ def parse_activities():
 def run_enable(act_name):
     code = os.system(f"{path_scripts_enable}/{act_name} > /dev/null 2>&1")
     code = int(int(code) / 256)
-    print(f"[ENABLE] for {act_name}, returned {code}")
+    print(f"[ENABLE] {act_name}, returned {code}")
 
 
 def run_disable(act_name):
     code = os.system(f"{path_scripts_disable}/{act_name} > /dev/null 2>&1")
     code = int(int(code) / 256)
-    print(f"[DISABLE] for {act_name}, returned {code}")
+    print(f"[DISABLE] {act_name}, returned {code}")
 
 
 def run_script(script_path):
