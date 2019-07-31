@@ -223,7 +223,7 @@ def bump():
             run_disable(activity_name)
 
         elif first_run:
-            if current_state == STATUS.ENABLED or STATUS.READY:
+            if current_state == STATUS.ENABLED or current_state == STATUS.READY:
                 run_enable(activity_name)
             elif current_state == STATUS.DISABLED:
                 run_disable(activity_name)
@@ -255,7 +255,7 @@ def bump():
     for extension in os.listdir(path_scripts_extensions):
         code = os.system(f"{path_scripts_extensions}/{extension} > /dev/null 2>&1")
         code = int(int(code) / 256)
-        print(f"Extensions {extension} returned {code}")
+        print(f"Extension {extension} returned {code}")
 
     # --------------------------------------------
     # - PREPARE FOR NEXT BUMP                    -
