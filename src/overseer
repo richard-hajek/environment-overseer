@@ -149,6 +149,9 @@ def bump():
             current_state = STATUS.READY
             decisions.append("READY (File link)")
 
+        if first_run:
+            previous_state = current_state
+
         # --------------------------------------------
         # - CHECK IF ACTIVITY HAS A SCHEDULED ACTION -
         # --------------------------------------------
@@ -250,7 +253,7 @@ def bump():
     # --------------------------------------------
 
     for extension in os.listdir(path_scripts_extensions):
-        code = os.system(f"{path_scripts_extensions}/{extension}")
+        code = os.system(f"{path_scripts_extensions}/{extension} 2>&1 > /dev/null")
         print(f"Extensions {extension} returned {code}")
 
     # --------------------------------------------
@@ -300,17 +303,17 @@ def parse_activities():
 
 
 def run_enable(act_name):
-    code = os.system(f"{path_scripts_enable}/{act_name} > /dev/null")
+    code = os.system(f"{path_scripts_enable}/{act_name} 2>&1 > /dev/null")
     print(f"Ran enable for {act_name}, script returned {code}")
 
 
 def run_disable(act_name):
-    code = os.system(f"{path_scripts_disable}/{act_name} > /dev/null")
+    code = os.system(f"{path_scripts_disable}/{act_name} 2>&1 > /dev/null")
     print(f"Ran disable for {act_name}, script returned {code}")
 
 
 def run_script(script_path):
-    code = os.system(f"{script_path} > /dev/null")
+    code = os.system(f"{script_path} 2>&1 > /dev/null")
     print(f"Ran {script_path}, return was {code}")
     return code
 
