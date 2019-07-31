@@ -125,13 +125,16 @@ def bump():
 
     for activity in activities.values():
 
+        first_run = False
+        decisions = []
         activity_name = activity["name"]
 
         if last_states.__contains__(activity_name):
             previous_state = last_states[activity_name]
         else:
-            run_disable(activity_name)
+            first_run = True
             previous_state = STATUS.DISABLED
+            decisions.append("defaults to DISABLED")
 
         current_state = STATUS.DISABLED
 
@@ -140,9 +143,11 @@ def bump():
         # --------------------------------------------
         if enabled_directory.__contains__(activity_name):
             current_state = STATUS.ENABLED
+            decisions.append("ENABLE (File link)")
 
         if semi_enabled_directory.__contains__(activity_name):
             current_state = STATUS.READY
+            decisions.append("READY (File link)")
 
         # --------------------------------------------
         # - CHECK IF ACTIVITY HAS A SCHEDULED ACTION -
@@ -153,12 +158,14 @@ def bump():
 
             if prev_time < start_time <= now_time:
                 current_state = STATUS.ENABLED
+                decisions.append("ENABLE (AutoStart)")
 
         if activity.__contains__("AutoStop"):
             stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
 
             if prev_time < stop_time <= now_time:
                 current_state = STATUS.DISABLED
+                decisions.append("DISABLE (AutoStop)")
 
         # --------------------------------------------
         # - CHECK ACTIVITY MANAGER                   -
@@ -170,8 +177,10 @@ def bump():
 
             if result == 0:
                 current_state = STATUS.ENABLED
+                decisions.append("ENABLE (Manager script)")
             elif result == 1:
                 current_state = STATUS.READY
+                decisions.append("DISABLE (Manager script)")
 
         # --------------------------------------------
         # - CHECK ACTIVITY LIMIT                     -
@@ -195,6 +204,7 @@ def bump():
 
             if time_left == 0:
                 current_state = STATUS.DISABLED
+                decisions.append("DISABLE (Limit)")
 
         # --------------------------------------------
         # - EXECUTE ALL ACTIONS                      -
@@ -209,6 +219,12 @@ def bump():
         elif current_state == STATUS.DISABLED and previous_state != STATUS.DISABLED:
             run_disable(activity_name)
 
+        elif first_run:
+            if current_state == STATUS.ENABLED or STATUS.READY:
+                run_enable(activity_name)
+            elif current_state == STATUS.DISABLED:
+                run_disable(activity_name)
+
         if current_state == STATUS.ENABLED:
             link_enable(activity_name)
 
@@ -218,6 +234,15 @@ def bump():
         if current_state == STATUS.DISABLED:
             link_disable(activity_name)
 
+        print(f"{activity_name}", end=" ")
+
+        if current_state == previous_state:
+            print(f"stayed in {current_state} state", end=" ")
+        else:
+            print(f"changed from {previous_state} to {current_state}", end=" ")
+
+        print(f"decisions was based on: {', '.join(decisions)}")
+
         last_states[activity_name] = current_state
 
     # --------------------------------------------
@@ -225,7 +250,8 @@ def bump():
     # --------------------------------------------
 
     for extension in os.listdir(path_scripts_extensions):
-        os.system(f"{path_scripts_extensions}/{extension}")
+        code = os.system(f"{path_scripts_extensions}/{extension}")
+        print(f"Extensions {extension} returned {code}")
 
     # --------------------------------------------
     # - PREPARE FOR NEXT BUMP                    -
@@ -274,18 +300,19 @@ def parse_activities():
 
 
 def run_enable(act_name):
-    print(f"Running enable for {act_name}")
-    os.system(f"{path_scripts_enable}/{act_name}")
+    code = os.system(f"{path_scripts_enable}/{act_name} > /dev/null")
+    print(f"Ran enable for {act_name}, script returned {code}")
 
 
 def run_disable(act_name):
-    print(f"Running disable for {act_name}")
-    os.system(f"{path_scripts_disable}/{act_name}")
+    code = os.system(f"{path_scripts_disable}/{act_name} > /dev/null")
+    print(f"Ran disable for {act_name}, script returned {code}")
 
 
 def run_script(script_path):
-    script = subprocess.run(script_path, stdout=subprocess.PIPE)
-    return script.returncode
+    code = os.system(f"{script_path} > /dev/null")
+    print(f"Ran {script_path}, return was {code}")
+    return code
 
 
 def activity_exists(act_name):
