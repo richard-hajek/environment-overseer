@@ -454,7 +454,7 @@ if __name__ == "__main__":
             if enabled.__contains__(ls_activity["name"]):
                 print("Enabled!", end='\t')
             elif ready.__contains__(ls_activity["name"]):
-                print("Standby!")
+                print("Standby!", end='\t')
             else:
                 print("Disabled", end='\t')
 
