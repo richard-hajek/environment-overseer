@@ -50,7 +50,7 @@ path_scripts_extensions = f"{path_home}/scripts/extensions"
 
 path_pid = f"/run/overseer.pid"
 
-reset_phrase = "I am an addicted idiot and need to reset the timers."
+reset_phrase = "I am an addicted idiot and need to reset the trackers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
 
