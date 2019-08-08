@@ -4,9 +4,9 @@ This small Python script allows one to execute arbitrary scripts based on enviro
 
 Goal of this project is to limit my own procrastination.
 
-Example:
+Example Setup:
  - Script `scripts/managers/youtube` reports seeing YouTube requests in Pi-hole's log
- - Overseer will consider the activity `YouTube` as enabled, counting the time it has spent enabled
+ - Overseer will consider the activity `YouTube` as enabled, tracking the time it has spent enabled
  - After YouTube's limit was reached, Overseer will execute `scripts/disable/youtube`
  and consider YouTube disabled
 
