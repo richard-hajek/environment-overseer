@@ -1,10 +1,11 @@
 import unittest
-
+from ..src.overseer import *
 
 class OverseerTest(unittest.TestCase):
 
-    def test_something(self):
-        assert 5 == 5
+    def test_time_parse(self):
+        assert True
+
 
 
 if __name__ == '__main__':
