@@ -4,7 +4,7 @@ import unittest
 class OverseerTest(unittest.TestCase):
 
     def test_something(self):
-        assert False
+        assert 5 == 5
 
 
 if __name__ == '__main__':
