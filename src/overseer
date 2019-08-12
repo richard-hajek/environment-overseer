@@ -185,19 +185,25 @@ def bump():
         # - CHECK ACTIVITY LIMIT                     -
         # --------------------------------------------
 
-        if activity.__contains__("Limit") and current_state == STATUS.ENABLED:
+        if activity.__contains__("Limit"):
 
             activity_time = get_activity_time(activity_name)
-            activity_time += time_passed
 
-            if activity_time >= activity["Limit"]:
-                activity_time = activity["Limit"]
+            if current_state == STATUS.ENABLED:
+                updated_time = activity_time + time_passed
+                activity_time = updated_time
+                update_time(activity_name, activity_time)
+
+            time_left = activity["Limit"] - activity_time
+
+            if time_left <= 0:
+                time_left = 0
+
+            update_rev_time(activity_name, time_left)
+
+            if time_left == 0:
                 current_state = STATUS.DISABLED
                 decisions.append("DISABLE (Limit)")
-
-            update_time(activity_name, activity_time)
-            time_left = activity["Limit"] - activity_time
-            update_rev_time(activity_name, time_left)
 
         # --------------------------------------------
         # - CHECK ACTIVITY RECHARGE                  -
@@ -217,13 +223,18 @@ def bump():
 
                 if activity_time <= 0:
                     activity_time = 0
-                    print(f"[RECHARGE] Recharging {activity_name} by {recharge}s")
-                else:
                     print(f"[RECHARGE] {activity_name} fully recharged!")
+                else:
+                    print(f"[RECHARGE] Recharging {activity_name} by {recharge}s")
 
                 update_time(activity_name, activity_time)
                 time_left = total_limit - activity_time
                 update_rev_time(activity_name, time_left)
+            else:
+                minute_recharge = int(1 / recharge_time * 60 * total_limit) # Test if we can get a recharge from a full minute
+
+                if minute_recharge == 0:
+                    print(f"[RECHARGE] Warning! Activity {activity_name} does not recharge due to small recharge step! Increase Limit or decrease recharge time for it to work.")
 
         # --------------------------------------------
         # - EXECUTE ALL ACTIONS                      -
@@ -260,7 +271,7 @@ def bump():
         else:
             print(f"changed from {previous_state} to {current_state}", end=", ")
 
-        print(f"decisions was based on: {', '.join(decisions)}", end="\n\n")
+        print(f"decisions were on: {', '.join(decisions)}", end="\n\n")
 
         last_states[activity_name] = current_state
 
