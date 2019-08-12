@@ -18,13 +18,11 @@ jobs:
 
     steps:
       - checkout
-
-      # run tests!
-      # this example uses Django's built-in test-runner
-      # other common Python testing frameworks include pytest and nose
-      # https://pytest.org
-      # https://nose.readthedocs.io
-
-  test:
-    override:
-      - nosetests test/overseer-test.py
+      - run:
+          command: |
+            python test/overseer-test.py
+      - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: test-results
+      - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+          path: test-results
+          destination: tr1
