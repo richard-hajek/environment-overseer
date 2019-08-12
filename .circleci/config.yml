@@ -24,11 +24,7 @@ jobs:
       # other common Python testing frameworks include pytest and nose
       # https://pytest.org
       # https://nose.readthedocs.io
-      - run:
-          name: run tests
-          command: |
-            python src/overseer --prepare
 
-      - store_artifacts:
-          path: test-reports
-          destination: test-reports
+    test:
+      override:
+        - nosetests test/overseer-test.py
