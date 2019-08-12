@@ -302,7 +302,7 @@ def parse_activities():
             limit = parse_time(limit_raw, activity["name"])
             activity["Limit"] = limit
 
-        if activities.__contains__("Recharge"):
+        if activity.__contains__("Recharge"):
             recharge_raw = activity["Recharge"]
             recharge = parse_time(recharge_raw, activity["name"])
             activity["Recharge"] = recharge
