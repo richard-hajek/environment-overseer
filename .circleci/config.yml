@@ -25,6 +25,6 @@ jobs:
       # https://pytest.org
       # https://nose.readthedocs.io
 
-    test:
-      override:
-        - nosetests test/overseer-test.py
+  test:
+    override:
+      - nosetests test/overseer-test.py
