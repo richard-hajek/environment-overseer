@@ -213,7 +213,9 @@ def bump():
             recharge_time = activity["Recharge"]
             total_limit = activity["Limit"]
 
-            activity_time -= 1 / recharge_time * time_passed * total_limit
+            recharge = 1 / recharge_time * time_passed * total_limit
+            activity_time -= recharge
+            print(f"[Recharge] Recharging {activity_name} by {recharge}s")
 
             if activity_time <= 0:
                 activity_time = 0
