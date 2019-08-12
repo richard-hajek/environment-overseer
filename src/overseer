@@ -189,25 +189,38 @@ def bump():
         # - CHECK ACTIVITY LIMIT                     -
         # --------------------------------------------
 
-        if activity.__contains__("Limit"):
+        if activity.__contains__("Limit") and current_state == STATUS.ENABLED:
 
             activity_time = get_activity_time(activity_name)
+            activity_time += time_passed
 
-            if current_state == STATUS.ENABLED:
-                updated_time = activity_time + time_passed
-                activity_time = updated_time
-                update_time(activity_name, activity_time)
-
-            time_left = activity["Limit"] - activity_time
-
-            if time_left <= 0:
-                time_left = 0
-
-            update_rev_time(activity_name, time_left)
-
-            if time_left == 0:
+            if activity_time >= activity["Limit"]:
+                activity_time = activity["Limit"]
                 current_state = STATUS.DISABLED
                 decisions.append("DISABLE (Limit)")
+
+            update_time(activity_name, activity_time)
+            time_left = activity["Limit"] - activity_time
+            update_rev_time(activity_name, time_left)
+
+        # --------------------------------------------
+        # - CHECK ACTIVITY RECHARGE                  -
+        # --------------------------------------------
+
+        if activity.__contains__("Limit") and activity.__contains__("Recharge") and (current_state == STATUS.DISABLED or current_state == STATUS.READY):
+
+            activity_time = get_activity_time(activity_name)
+            recharge_time = activity["Recharge"]
+            total_limit = activity["Limit"]
+
+            activity_time -= 1 / recharge_time * time_passed * total_limit
+
+            if activity_time <= 0:
+                activity_time = 0
+
+            update_time(activity_name, activity_time)
+            time_left = total_limit - activity_time
+            update_rev_time(activity_name, time_left)
 
         # --------------------------------------------
         # - EXECUTE ALL ACTIONS                      -
@@ -268,39 +281,57 @@ def bump():
 
 
 def parse_activities():
+
     names = os.listdir(path_definitions)
     activities = {}
+
     for name in names:
+
         with open(f"{path_definitions}/{name}", 'r') as f:
             activity = json.load(f)
+
         activity["name"] = name.split(".")[0]
         activities[activity['name']] = activity
 
     for activity in activities.values():
-        limit_raw = activity["Limit"]
-        limit = 0
 
-        try:
-            limit = int(limit_raw[:-1])
-        except ValueError:
-            print(f"Could not parse limit \"{limit_raw}\" of activity {activity['name']}")
-            die("misconfiguration")
+        if activity.__contains__("Limit"):
+            limit_raw = activity["Limit"]
+            limit = parse_time(limit_raw, activity["name"])
+            activity["Limit"] = limit
 
-        unit = limit_raw[-1:]
-
-        if unit.lower() == 'h':
-            limit = limit * 3600
-        elif unit.lower() == 'm':
-            limit = limit * 60
-        elif unit.lower() == 's':
-            limit = limit
-        else:
-            print(f"Unknown time unit '{unit}' in activity {activity['name']}")
-            die("misconfiguration")
-
-        activity["Limit"] = limit
+        if activities.__contains__("Recharge"):
+            recharge_raw = activity["Recharge"]
+            recharge = parse_time(recharge_raw, activity["name"])
+            activity["Recharge"] = recharge
 
     return activities
+
+
+def parse_time(time_raw, act_name):
+
+    time_parsed = 0
+    unit = ''
+    time = 0
+
+    try:
+        time = int(time_raw[:-1])
+        unit = time_raw[-1:]
+    except ValueError:
+        print(f'Could not parse time "{time_raw}" of activity {act_name}')
+        die("misconfiguration")
+
+    if unit.lower() == 'h':
+        time_parsed = time * 3600
+    elif unit.lower() == 'm':
+        time_parsed = time * 60
+    elif unit.lower() == 's':
+        time_parsed = time
+    else:
+        print(f"Unknown time unit '{unit}' in activity {act_name}")
+        die("misconfiguration")
+
+    return time_parsed
 
 
 def run_enable(act_name):
