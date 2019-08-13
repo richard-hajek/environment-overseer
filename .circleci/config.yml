@@ -19,7 +19,7 @@ jobs:
     steps:
       - checkout
       - run:
-          - sudo pip install psutil
+          command: sudo pip install psutil
       - run:
           command: |
             python src/overseer-test.py
