@@ -19,6 +19,8 @@ jobs:
     steps:
       - checkout
       - run:
+          - sudo pip install psutil
+      - run:
           command: |
             python src/overseer-test.py
       - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
