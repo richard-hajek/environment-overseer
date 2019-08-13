@@ -1,13 +1,13 @@
 # Maintainer: Mewosiku <meowiik at gmail dot com>
 pkgname=environment-overseer-git
-pkgver=r106.4b505f6
+pkgver=r113.4589f4e
 pkgrel=1
 pkgdesc="Real time environment manager, used primarily to suppress addictive sites"
 arch=('any')
 url="https://gitlab.com/meowxiik/environment-overseer"
 license=('GPL')
 depends=('python')
-source=("$pkgname::git+https://gitlab.com/meowxiik/environment-overseer.git/")
+source=("$pkgname::git+https://github.com/meowxiik/environment-overseer.git/")
 md5sums=('SKIP')
 validpgpkeys=()
 
@@ -17,6 +17,7 @@ pkgver() {
 }
 
 package() {
+    mv ${srcdir}/${pkgname}/src/overseer.py ${srcdir}/${pkgname}/src/overseer
 	install -Dm 755 ${srcdir}/${pkgname}/src/* --target-directory "${pkgdir}/usr/bin/"
 	install -Dm 644 ${srcdir}/${pkgname}/systemd/* --target-directory "${pkgdir}/usr/lib/systemd/system"
 }
