@@ -21,6 +21,11 @@ class STATUS:
     READY = "ready"
 
 
+class ACTION:
+    IDLE = "idle"
+    ENABLE = "enable"
+    DISABLE = "disable"
+
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
@@ -44,6 +49,7 @@ path_reverse_trackers = f"{path_home}/reverse-trackers"
 path_scripts_enable = f"{path_home}/scripts/enable"
 path_scripts_disable = f"{path_home}/scripts/disable"
 path_scripts_managers = f"{path_home}/scripts/managers"
+path_scripts_checks = f"{path_home}/scripts/checks"
 
 path_scripts_extensions = f"{path_home}/scripts/extensions"
 
@@ -103,165 +109,93 @@ def reset_timers():
 def bump():
     global bumped_at
     global last_states
-    global last_bump_active_names
 
     # --------------------------------------------
     # - PRELIMINARY TIMER PREPARATIONS           -
     # --------------------------------------------
+    print("----Bumping----")
+    create_all_records()
     for event in timer.queue:  # Remove any interfering bumps
         timer.cancel(event)
 
-    print("----Bumping----")
-    create_all_records()
-
     activities = parse_activities()
-    enabled_directory = os.listdir(path_enabled)
-    semi_enabled_directory = os.listdir(path_ready)
-
-    prev_time = datetime.datetime.fromtimestamp(bumped_at).time()
-    now_time = datetime.datetime.now().time()
-    time_passed = time.time() - bumped_at
+    prev_time = bumped_at
+    now_time = int(datetime.datetime.timestamp(datetime.datetime.now()))
 
     for activity in activities.values():
 
-        first_run = False
-        decisions = []
+        # --------------------------------------------
+        # - COLLECT ALL DATA ABOUT AN ACTIVITY       -
+        # --------------------------------------------
+
         activity_name = activity["name"]
+
+        first_run = False
 
         if last_states.__contains__(activity_name):
             previous_state = last_states[activity_name]
         else:
             first_run = True
             previous_state = STATUS.DISABLED
-            decisions.append("defaults to DISABLED")
 
-        current_state = STATUS.DISABLED
+        if os.path.isfile(f"{path_scripts_checks}/{activity_name}"):
+            check_return_code = run_script(f"{path_scripts_checks}/{activity_name}")
 
-        # --------------------------------------------
-        # - CHECK IF ENABLED                         -
-        # --------------------------------------------
-        if enabled_directory.__contains__(activity_name):
-            current_state = STATUS.ENABLED
-            decisions.append("ENABLE (File link)")
+            if check_return_code == 0:
+                previous_state = STATUS.ENABLED
+            elif check_return_code == 1:
+                previous_state = STATUS.DISABLED
 
-        if first_run:
-            previous_state = current_state
-
-        # --------------------------------------------
-        # - CHECK IF ACTIVITY HAS A SCHEDULED ACTION -
-        # --------------------------------------------
-
-        if activity.__contains__("AutoStart"):
-            start_time = datetime.datetime.strptime(activity["AutoStart"], "%H:%M").time()
-
-            if prev_time < start_time <= now_time:
-                current_state = STATUS.ENABLED
-                decisions.append("ENABLE (AutoStart)")
-
-        if activity.__contains__("AutoStop"):
-            stop_time = datetime.datetime.strptime(activity["AutoStop"], "%H:%M").time()
-
-            if prev_time < stop_time <= now_time:
-                current_state = STATUS.DISABLED
-                decisions.append("DISABLE (AutoStop)")
-
-        # --------------------------------------------
-        # - CHECK ACTIVITY MANAGER                   -
-        # --------------------------------------------
-
-        if os.path.isfile(f"{path_scripts_managers}/{activity_name}"):
-            path = f"{path_scripts_managers}/{activity_name}"
-            result = run_script(path)
-
-            if result == 0:
-                current_state = STATUS.ENABLED
-                decisions.append("ENABLE (Manager script)")
-            elif result == 1:
-                current_state = STATUS.READY
-                decisions.append("READY (Manager script)")
-
-        # --------------------------------------------
-        # - CHECK ACTIVITY LIMIT                     -
-        # --------------------------------------------
+        decisions = []
+        activity_time = get_activity_time(activity_name)
+        limit = None
 
         if activity.__contains__("Limit"):
+            limit = activity["Limit"]
 
-            activity_time = get_activity_time(activity_name)
+        recharge_time = None
 
-            if current_state == STATUS.ENABLED:
-                updated_time = activity_time + time_passed
-                activity_time = updated_time
-                update_time(activity_name, activity_time)
+        if activity.__contains__("Recharge"):
+            recharge_time = activity["Limit"]
 
-            time_left = activity["Limit"] - activity_time
+        link_enabled = os.path.islink(f"{path_enabled}/{activity_name}")
 
-            if time_left <= 0:
-                time_left = 0
+        manager_return_code = None
+        if os.path.isfile(f"{path_scripts_managers}/{activity_name}"):
+            manager_return_code = run_script(f"{path_scripts_managers}/{activity_name}")
 
+        auto_start = None
+        if activity.__contains__("AutoStart"):
+            auto_start = activity["AutoStart"]
+
+        auto_stop = None
+        if activity.__contains__("AutoStop"):
+            auto_stop = activity["AutoStop"]
+
+        # --------------------------------------------
+        # - PROCESS THE ACTIVITY                     -
+        # --------------------------------------------
+
+        decision, current_state, decisions, new_activity_time = process_activity(prev_time, now_time, previous_state, activity_time, limit, recharge_time, link_enabled, decisions, manager_return_code, auto_start, auto_stop, first_run)
+
+        if new_activity_time != activity_time:
+            update_time(activity_name, new_activity_time)
+            time_left = limit - activity_time
             update_rev_time(activity_name, time_left)
 
-            if time_left == 0:
-                current_state = STATUS.DISABLED
-                decisions.append("DISABLE (Limit)")
-
-        # --------------------------------------------
-        # - CHECK ACTIVITY RECHARGE                  -
-        # --------------------------------------------
-
-        if activity.__contains__("Limit") and activity.__contains__("Recharge") and (current_state == STATUS.DISABLED or current_state == STATUS.READY):
-
-            activity_time = get_activity_time(activity_name)
-            recharge_time = activity["Recharge"]
-            total_limit = activity["Limit"]
-
-            recharge = 1 / recharge_time * time_passed * total_limit
-            recharge = int(recharge)
-
-            if recharge != 0:
-                activity_time -= recharge
-
-                if activity_time <= 0:
-                    activity_time = 0
-                    print(f"[RECHARGE] {activity_name} fully recharged!")
-                else:
-                    print(f"[RECHARGE] Recharging {activity_name} by {recharge}s")
-
-                update_time(activity_name, activity_time)
-                time_left = total_limit - activity_time
-                update_rev_time(activity_name, time_left)
-            else:
-                minute_recharge = int(1 / recharge_time * 60 * total_limit) # Test if we can get a recharge from a full minute
-
-                if minute_recharge == 0:
-                    print(f"[RECHARGE] Warning! Activity {activity_name} does not recharge due to small recharge step! Increase Limit or decrease recharge time for it to work.")
-
-        # --------------------------------------------
-        # - EXECUTE ALL ACTIONS                      -
-        # --------------------------------------------
-
-        if current_state == STATUS.ENABLED and previous_state == STATUS.DISABLED:
+        if decision == ACTION.ENABLE:
             run_enable(activity_name)
-
-        elif current_state == STATUS.READY and previous_state == STATUS.DISABLED:
-            run_enable(activity_name)
-
-        elif current_state == STATUS.DISABLED and previous_state != STATUS.DISABLED:
+        elif decision == ACTION.DISABLE:
             run_disable(activity_name)
-
-        elif first_run:
-            if current_state == STATUS.ENABLED or current_state == STATUS.READY:
-                run_enable(activity_name)
-            elif current_state == STATUS.DISABLED:
-                run_disable(activity_name)
+        elif decision == ACTION.IDLE:
+            pass
 
         if current_state == STATUS.ENABLED:
             link_enable(activity_name)
-
-        if current_state == STATUS.READY:
-            link_ready(activity_name)
-
-        if current_state == STATUS.DISABLED:
+        elif current_state == STATUS.DISABLED:
             link_disable(activity_name)
+        elif current_state == STATUS.READY:
+            link_ready(activity_name)
 
         print(f"[STATUS] {activity_name}", end=" ")
 
@@ -270,7 +204,7 @@ def bump():
         else:
             print(f"changed from {previous_state} to {current_state}", end=", ")
 
-        print(f"decisions were on: {', '.join(decisions)}", end="\n\n")
+        print(f"decisions based on: {', '.join(decisions)}", end="\n\n")
 
         last_states[activity_name] = current_state
 
@@ -291,6 +225,117 @@ def bump():
     next_bump = 60
     print(f"Scheduling next bump in {next_bump} seconds")
     timer.enter(next_bump, 1, bump)
+
+
+def process_activity(previous_time, current_time, previous_status, activity_time, limit, recharge_time, link_enabled, decisions, manager_return_code=None, auto_start=None, auto_stop=None, first_run=False):
+
+    current_status = STATUS.DISABLED
+    decisions.append("DISABLE (default)")
+
+    if link_enabled:
+        current_status = STATUS.ENABLED
+        decisions.append("ENABLE (File link)")
+
+    # --------------------------------------------
+    # - CHECK IF ACTIVITY HAS A SCHEDULED ACTION -
+    # --------------------------------------------
+
+    if auto_start is not None:
+        if process_auto_trigger(previous_time, current_time, auto_start):
+            current_status = STATUS.ENABLED
+            decisions.append("ENABLE (AutoStart)")
+
+    if auto_stop is not None:
+        if process_auto_trigger(previous_time, current_time, auto_stop):
+            current_status = STATUS.DISABLED
+            decisions.append("DISABLE (AutoStop)")
+
+    # --------------------------------------------
+    # - CHECK ACTIVITY MANAGER                   -
+    # --------------------------------------------
+
+    if manager_return_code is not None:
+        if manager_return_code == 0:
+            current_status = STATUS.ENABLED
+            decisions.append("ENABLE (Manager script)")
+        elif manager_return_code == 1:
+            current_status = STATUS.READY
+            decisions.append("READY (Manager script)")
+
+    # --------------------------------------------
+    # - CHECK ACTIVITY LIMIT                     -
+    # --------------------------------------------
+
+    if limit is not None:
+        activity_time, activity_still_available = process_limit(current_time - previous_time, activity_time, limit, current_status)
+
+        if not activity_still_available:
+            current_status = STATUS.DISABLED
+            decisions.append("DISABLE (Limit)")
+
+    # --------------------------------------------
+    # - CHECK ACTIVITY RECHARGE                  -
+    # --------------------------------------------
+
+    if limit is not None and recharge_time is not None:
+        recharge = process_recharge(previous_time - current_time, current_status, recharge_time, limit)
+        activity_time -= recharge
+
+    # --------------------------------------------
+    # - PROCESS DECISIONS & RETURN RESULTS       -
+    # --------------------------------------------
+
+    decision = process_decision(current_status, previous_status, first_run)
+    return decision, current_status, decisions, activity_time
+
+
+def process_auto_trigger(previous_time, current_time, trigger_at):
+    trigger_time = datetime.datetime.strptime(trigger_at, "%H:%M").time()
+
+    if previous_time < trigger_time <= current_time:
+        return True
+    return False
+
+
+def process_limit(time_delta, activity_time, limit, current_status):
+
+    if current_status == STATUS.ENABLED:
+        activity_time = activity_time + time_delta
+
+    if activity_time >= limit:
+        activity_time = limit
+        return activity_time, False
+
+    return activity_time, True
+
+
+def process_recharge(time_delta, current_status, recharge_time, limit):
+
+    if current_status == STATUS.ENABLED:
+        return 0
+
+    recharge = 1 / recharge_time * time_delta * limit
+    recharge = int(recharge)
+    return recharge
+
+
+def process_decision(current_status, previous_status, first_run):
+    if current_status == STATUS.ENABLED and previous_status == STATUS.DISABLED:
+        return ACTION.ENABLE
+
+    elif current_status == STATUS.READY and previous_status == STATUS.DISABLED:
+        return ACTION.ENABLE
+
+    elif current_status == STATUS.DISABLED and previous_status != STATUS.DISABLED:
+        return ACTION.DISABLE
+
+    elif first_run:
+        if current_status == STATUS.ENABLED or current_status == STATUS.READY:
+            return ACTION.ENABLE
+        elif current_status == STATUS.DISABLED:
+            return ACTION.DISABLE
+
+    return ACTION.IDLE
 
 
 def parse_activities():
@@ -423,6 +468,8 @@ def create_folders_if_non_existent():
         os.makedirs(path_scripts_disable)
     if not os.path.isdir(path_scripts_managers):
         os.makedirs(path_scripts_managers)
+    if not os.path.isdir(path_scripts_checks):
+        os.makedirs(path_scripts_checks)
     if not os.path.isdir(path_scripts_extensions):
         os.makedirs(path_scripts_extensions)
 
@@ -460,8 +507,6 @@ def is_privileged():
 
 
 if __name__ == "__main__":
-
-    last_bump_active_names = []
 
     last_states = {}
 
