@@ -26,6 +26,7 @@ class ACTION:
     ENABLE = "enable"
     DISABLE = "disable"
 
+
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
@@ -65,6 +66,13 @@ def sigusr(_, __):
 
 def sigusr2(_, __):
     reset_timers()
+
+
+def sigterm(_, __):  # Disable all activities prior to shutdown
+    for name in os.listdir(f"{path_enabled}"):
+        os.remove(f"{path_enabled}/{name}")
+
+    bump()
 
 
 def link_enable(act_name):
@@ -119,8 +127,8 @@ def bump():
         timer.cancel(event)
 
     activities = parse_activities()
-    prev_time = bumped_at
-    now_time = int(datetime.datetime.timestamp(datetime.datetime.now()))
+    prev_time = int(bumped_at)
+    now_time = int(time.time())
 
     for activity in activities.values():
 
@@ -176,13 +184,19 @@ def bump():
         # - PROCESS THE ACTIVITY                     -
         # --------------------------------------------
 
-        decision, current_state, decisions, new_activity_time = process_activity(prev_time, now_time, previous_state, activity_time, limit, recharge_time, link_enabled, decisions, manager_return_code, auto_start, auto_stop, first_run)
+        decision, current_state, decisions, new_activity_time = process_activity(prev_time, now_time, previous_state,
+                                                                                 activity_time, limit, recharge_time,
+                                                                                 link_enabled, decisions,
+                                                                                 manager_return_code, auto_start,
+                                                                                 auto_stop, first_run)
 
+        # Update time
         if new_activity_time != activity_time:
             update_time(activity_name, new_activity_time)
             time_left = limit - activity_time
             update_rev_time(activity_name, time_left)
 
+        # Run enable / disable scripts
         if decision == ACTION.ENABLE:
             run_enable(activity_name)
         elif decision == ACTION.DISABLE:
@@ -190,6 +204,7 @@ def bump():
         elif decision == ACTION.IDLE:
             pass
 
+        # Update links
         if current_state == STATUS.ENABLED:
             link_enable(activity_name)
         elif current_state == STATUS.DISABLED:
@@ -197,6 +212,7 @@ def bump():
         elif current_state == STATUS.READY:
             link_ready(activity_name)
 
+        # Print status
         print(f"[STATUS] {activity_name}", end=" ")
 
         if current_state == previous_state:
@@ -227,7 +243,8 @@ def bump():
     timer.enter(next_bump, 1, bump)
 
 
-def process_activity(previous_time, current_time, previous_status, activity_time, limit, recharge_time, link_enabled, decisions, manager_return_code=None, auto_start=None, auto_stop=None, first_run=False):
+def process_activity(previous_time, current_time, previous_status, activity_time, limit, recharge_time, link_enabled,
+                     decisions, manager_return_code=None, auto_start=None, auto_stop=None, first_run=False):
 
     current_status = STATUS.DISABLED
     decisions.append("DISABLE (default)")
@@ -267,7 +284,8 @@ def process_activity(previous_time, current_time, previous_status, activity_time
     # --------------------------------------------
 
     if limit is not None:
-        activity_time, activity_still_available = process_limit(current_time - previous_time, activity_time, limit, current_status)
+        activity_time, activity_still_available = process_limit(current_time - previous_time, activity_time, limit,
+                                                                current_status)
 
         if not activity_still_available:
             current_status = STATUS.DISABLED
@@ -278,8 +296,7 @@ def process_activity(previous_time, current_time, previous_status, activity_time
     # --------------------------------------------
 
     if limit is not None and recharge_time is not None:
-        recharge = process_recharge(previous_time - current_time, current_status, recharge_time, limit)
-        activity_time -= recharge
+        activity_time = process_recharge(current_time - previous_time, current_status, activity_time, recharge_time, limit)
 
     # --------------------------------------------
     # - PROCESS DECISIONS & RETURN RESULTS       -
@@ -298,7 +315,6 @@ def process_auto_trigger(previous_time, current_time, trigger_at):
 
 
 def process_limit(time_delta, activity_time, limit, current_status):
-
     if current_status == STATUS.ENABLED:
         activity_time = activity_time + time_delta
 
@@ -309,14 +325,19 @@ def process_limit(time_delta, activity_time, limit, current_status):
     return activity_time, True
 
 
-def process_recharge(time_delta, current_status, recharge_time, limit):
-
+def process_recharge(time_delta, current_status, activity_time, recharge_time, limit):
     if current_status == STATUS.ENABLED:
         return 0
 
     recharge = 1 / recharge_time * time_delta * limit
     recharge = int(recharge)
-    return recharge
+    
+    activity_time -= recharge
+
+    if activity_time <= 0:
+        activity_time = 0
+
+    return activity_time
 
 
 def process_decision(current_status, previous_status, first_run):
@@ -339,12 +360,10 @@ def process_decision(current_status, previous_status, first_run):
 
 
 def parse_activities():
-
     names = os.listdir(path_definitions)
     activities = {}
 
     for name in names:
-
         with open(f"{path_definitions}/{name}", 'r') as f:
             activity = json.load(f)
 
@@ -367,7 +386,6 @@ def parse_activities():
 
 
 def parse_time(time_raw, act_name):
-
     time_parsed = 0
     unit = ''
     time = 0
@@ -510,7 +528,7 @@ if __name__ == "__main__":
 
     last_states = {}
 
-    bumped_at = time.time()
+    bumped_at = int(time.time())
     timer = sched.scheduler(time.time, time.sleep)
 
     parser = argparse.ArgumentParser(description="Controls the environment overseer")
@@ -626,6 +644,7 @@ if __name__ == "__main__":
 
         signal.signal(signal.SIGUSR1, sigusr)
         signal.signal(signal.SIGUSR2, sigusr2)
+        signal.signal(signal.SIGTERM, sigterm)
         bump()
         with open(path_pid, "w") as pidf:
             pidf.write(str(os.getpid()))

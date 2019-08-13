@@ -1,5 +1,5 @@
 import unittest
-from overseer import *
+from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
 
 
 class OverseerTest(unittest.TestCase):
