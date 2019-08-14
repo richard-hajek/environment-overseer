@@ -1,6 +1,0 @@
-#!/usr/bin/bash
-
-pihole --wild -d -nr discord.com
-pihole --wild -d -nr discordapp.com
-
-pihole restartdns

@@ -1,7 +1,0 @@
-#!/usr/bin/bash
-
-pihole --wild -d -nr netflix.com
-pihole --wild -d -nr nflxvideo.net
-pihole --wild -d -nr nflxso.net
-
-pihole restartdns

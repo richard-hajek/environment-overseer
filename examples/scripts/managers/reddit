@@ -1,4 +1,0 @@
-#!/usr/bin/sh
-
-cd /etc/overseer/scripts/managers
-./pihelper "reddit"
