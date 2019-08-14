@@ -73,6 +73,7 @@ def sigterm(_, __):  # Disable all activities prior to shutdown
         os.remove(f"{path_enabled}/{name}")
 
     bump()
+    die("success")
 
 
 def link_enable(act_name):
@@ -296,7 +297,12 @@ def process_activity(previous_time, current_time, previous_status, activity_time
     # --------------------------------------------
 
     if limit is not None and recharge_time is not None:
-        activity_time = process_recharge(current_time - previous_time, current_status, activity_time, recharge_time, limit)
+        recharge = process_recharge(current_time - previous_time, current_status, recharge_time, limit)
+
+        activity_time -= recharge
+
+        if activity_time <= 0:
+            activity_time = 0
 
     # --------------------------------------------
     # - PROCESS DECISIONS & RETURN RESULTS       -
@@ -325,19 +331,14 @@ def process_limit(time_delta, activity_time, limit, current_status):
     return activity_time, True
 
 
-def process_recharge(time_delta, current_status, activity_time, recharge_time, limit):
+def process_recharge(time_delta, current_status, recharge_time, limit):
     if current_status == STATUS.ENABLED:
         return 0
 
     recharge = 1 / recharge_time * time_delta * limit
     recharge = int(recharge)
-    
-    activity_time -= recharge
 
-    if activity_time <= 0:
-        activity_time = 0
-
-    return activity_time
+    return recharge
 
 
 def process_decision(current_status, previous_status, first_run):
