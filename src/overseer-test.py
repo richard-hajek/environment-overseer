@@ -1,16 +1,19 @@
 import unittest
-from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
+import datetime
+#from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
+from src.overseer import *
 
 class OverseerTest(unittest.TestCase):
 
     def test_auto_triggers(self):
         self.small_trigger_test("10:00", "10:02", "10:01", True)
-        self.small_trigger_test("0:00", "23:00", "10:01", True)
+        self.small_trigger_test("00:01", "23:00", "10:01", True)
         self.small_trigger_test("10:00", "10:02", "10:10", False)
 
     def small_trigger_test(self, time_a, time_b, trigger, should_trigger):
-        time_a = datetime.datetime.strptime(time_a, "%H:%M").time()
-        time_b = datetime.datetime.strptime(time_b, "%H:%M").time()
+        time_a = dt.datetime.combine(dt.date.today(), dt.time.fromisoformat(time_a)).timestamp()
+        time_b = dt.datetime.combine(dt.date.today(), dt.time.fromisoformat(time_b)).timestamp()
+
         assert should_trigger == process_auto_trigger(time_a, time_b, trigger)
 
     def test_recharge(self):
@@ -19,6 +22,18 @@ class OverseerTest(unittest.TestCase):
         assert 30 == process_recharge(60, STATUS.DISABLED, 7200, 3600)
         assert 120 == process_recharge(60, STATUS.DISABLED, 3600, 7200)
         assert 120 == process_recharge(60, STATUS.READY, 3600, 7200)
+
+        recharge = 0
+        recharge_to = 3600
+        recharge_time = 3600 * 24
+
+        time_step = 60
+
+        for i in range(int(recharge_time / time_step)):
+            recharge += process_recharge(time_step, STATUS.DISABLED, recharge_time, recharge_to)
+
+        assert recharge == recharge_to
+
 
     def test_decisions(self):
         assert ACTION.ENABLE == process_decision(STATUS.ENABLED, STATUS.DISABLED, False)

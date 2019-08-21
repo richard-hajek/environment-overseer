@@ -7,7 +7,7 @@ import signal
 import time
 import psutil
 import json
-import datetime
+import datetime as dt
 
 
 def die(reason):
@@ -61,7 +61,7 @@ phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
 
 def sigusr(_, __):
-    bump()
+    tick()
 
 
 def sigusr2(_, __):
@@ -72,7 +72,7 @@ def sigterm(_, __):  # Disable all activities prior to shutdown
     for name in os.listdir(f"{path_enabled}"):
         os.remove(f"{path_enabled}/{name}")
 
-    bump()
+    tick()
     die("success")
 
 
@@ -101,34 +101,34 @@ def link_ready(act_name):
 
 
 def reset_timers():
-    for name in os.listdir(f"{path_trackers}"):
-        os.remove(f"{path_trackers}/{name}")
 
-    for name in os.listdir(f"{path_enabled}"):
-        os.remove(f"{path_enabled}/{name}")
-        run_disable(name)
+    activities = parse_activities()
 
-    for activity in os.listdir(f"{path_definitions}"):
-        name = activity.split(".")[0]
+    for activity in activities.values():
+
+        name = activity["name"]
         update_time(name, 0)
 
-    bump()
+        if os.path.islink(f"{path_enabled}/{name}"):
+            os.remove(f"{path_enabled}/{name}")
+
+    tick()
 
 
-def bump():
-    global bumped_at
+def tick():
+    global last_tick_at
     global last_states
 
     # --------------------------------------------
     # - PRELIMINARY TIMER PREPARATIONS           -
     # --------------------------------------------
-    print("----Bumping----")
+    print("----Processing a tick----")
     create_all_records()
-    for event in timer.queue:  # Remove any interfering bumps
+    for event in timer.queue:
         timer.cancel(event)
 
     activities = parse_activities()
-    prev_time = int(bumped_at)
+    prev_time = int(last_tick_at)
     now_time = int(time.time())
 
     for activity in activities.values():
@@ -165,7 +165,7 @@ def bump():
         recharge_time = None
 
         if activity.__contains__("Recharge"):
-            recharge_time = activity["Limit"]
+            recharge_time = activity["Recharge"]
 
         link_enabled = os.path.islink(f"{path_enabled}/{activity_name}")
 
@@ -190,14 +190,9 @@ def bump():
                                                                                  link_enabled, decisions,
                                                                                  manager_return_code, auto_start,
                                                                                  auto_stop, first_run)
-
-        # Update time
-        if new_activity_time != activity_time:
-            update_time(activity_name, new_activity_time)
-            time_left = limit - activity_time
-            update_rev_time(activity_name, time_left)
-
-        # Run enable / disable scripts
+        # --------------------------------------------
+        # - PERFORM DECISIONS                        -
+        # --------------------------------------------
         if decision == ACTION.ENABLE:
             run_enable(activity_name)
         elif decision == ACTION.DISABLE:
@@ -205,7 +200,14 @@ def bump():
         elif decision == ACTION.IDLE:
             pass
 
-        # Update links
+        # --------------------------------------------
+        # - UPDATE FILESYSTEM                        -
+        # --------------------------------------------
+        if new_activity_time != activity_time:
+            update_time(activity_name, new_activity_time)
+            time_left = limit - activity_time
+            update_rev_time(activity_name, time_left)
+
         if current_state == STATUS.ENABLED:
             link_enable(activity_name)
         elif current_state == STATUS.DISABLED:
@@ -213,7 +215,9 @@ def bump():
         elif current_state == STATUS.READY:
             link_ready(activity_name)
 
-        # Print status
+        # --------------------------------------------
+        # - PRINT STATUS                             -
+        # --------------------------------------------
         print(f"[STATUS] {activity_name}", end=" ")
 
         if current_state == previous_state:
@@ -235,13 +239,13 @@ def bump():
         print(f"[EXTENSION] {extension} returned {code}")
 
     # --------------------------------------------
-    # - PREPARE FOR NEXT BUMP                    -
+    # - PREPARE FOR NEXT TICK                    -
     # --------------------------------------------
 
-    bumped_at = time.time()
-    next_bump = 60
-    print(f"Scheduling next bump in {next_bump} seconds")
-    timer.enter(next_bump, 1, bump)
+    last_tick_at = time.time()
+    next_tick = 60
+    print(f"Scheduling next tick in {next_tick} seconds")
+    timer.enter(next_tick, 1, tick)
 
 
 def process_activity(previous_time, current_time, previous_status, activity_time, limit, recharge_time, link_enabled,
@@ -299,6 +303,8 @@ def process_activity(previous_time, current_time, previous_status, activity_time
     if limit is not None and recharge_time is not None:
         recharge = process_recharge(current_time - previous_time, current_status, recharge_time, limit)
 
+        print(f"Activity recharged by {recharge} seconds, over {current_time - previous_time} seconds")
+
         activity_time -= recharge
 
         if activity_time <= 0:
@@ -313,9 +319,9 @@ def process_activity(previous_time, current_time, previous_status, activity_time
 
 
 def process_auto_trigger(previous_time, current_time, trigger_at):
-    trigger_time = datetime.datetime.strptime(trigger_at, "%H:%M").time()
+    trigger_timestamp = dt.datetime.combine(dt.date.today(), dt.time.fromisoformat(trigger_at)).timestamp()
 
-    if previous_time < trigger_time <= current_time:
+    if previous_time < trigger_timestamp <= current_time:
         return True
     return False
 
@@ -335,8 +341,8 @@ def process_recharge(time_delta, current_status, recharge_time, limit):
     if current_status == STATUS.ENABLED:
         return 0
 
-    recharge = 1 / recharge_time * time_delta * limit
-    recharge = int(recharge)
+    recharge = limit / recharge_time  # Get how many seconds should recharge in one second
+    recharge *= time_delta  # Multiply by num of seconds
 
     return recharge
 
@@ -392,7 +398,7 @@ def parse_time(time_raw, act_name):
     time = 0
 
     try:
-        time = int(time_raw[:-1])
+        time = float(time_raw[:-1])
         unit = time_raw[-1:]
     except ValueError:
         print(f'Could not parse time "{time_raw}" of activity {act_name}')
@@ -460,12 +466,12 @@ def create_record_if_non_existent(act_name):
 
 def update_time(act_name, seconds):
     with open(f"{path_trackers}/{act_name}", 'w') as file:
-        file.write(str(int(seconds)))
+        file.write(str(seconds))
 
 
 def update_rev_time(act_name, seconds):
     with open(f"{path_reverse_trackers}/{act_name}", 'w') as file:
-        file.write(str(int(seconds)))
+        file.write(str(seconds))
 
 
 def create_folders_if_non_existent():
@@ -493,7 +499,7 @@ def create_folders_if_non_existent():
         os.makedirs(path_scripts_extensions)
 
 
-def remote_bump():
+def remote_tick():
     with open(path_pid, 'r') as content_file:
         pid = content_file.read()
         pid = int(pid)
@@ -529,7 +535,7 @@ if __name__ == "__main__":
 
     last_states = {}
 
-    bumped_at = int(time.time())
+    last_tick_at = int(time.time())
     timer = sched.scheduler(time.time, time.sleep)
 
     parser = argparse.ArgumentParser(description="Controls the environment overseer")
@@ -538,7 +544,7 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--list', action='store_true', help='List usage activities')
     parser.add_argument('-r', '--reset', action='store_true', help='Reset all timers and disables everything')
     parser.add_argument('-p', '--prepare', action='store_true', help='Prepares the file structure')
-    parser.add_argument('-b', '--bump', action='store_true', help='Bumps the daemon')
+    parser.add_argument('-t', '--tick', action='store_true', help='Forces a daemon to process a tick')
     parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
     args = parser.parse_args()
 
@@ -547,7 +553,7 @@ if __name__ == "__main__":
                    not args.reset and \
                    not args.list and \
                    not args.prepare and \
-                   not args.bump
+                   not args.tick
 
     if args.list:
         activities = parse_activities()
@@ -566,9 +572,17 @@ if __name__ == "__main__":
             else:
                 print("Disabled", end='\t')
 
-            print(datetime.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
+            if os.path.isfile(f"{path_scripts_managers}/{ls_activity['name']}"):
+                print("Managed", end='\t')
+            else:
+                print("Unmanaged", end='\t')
+
+            print(dt.timedelta(seconds=get_activity_time(ls_activity["name"])), end='\t')
             print("out of", end='\t')
-            print(datetime.timedelta(seconds=ls_activity["Limit"]), end='\t')
+            print(dt.timedelta(seconds=ls_activity["Limit"]), end='\t')
+
+            if ls_activity.__contains__("Recharge"):
+                print("Rechargable", end='\t')
 
             print()
         exit(0)
@@ -587,9 +601,9 @@ if __name__ == "__main__":
     if not start_daemon and not is_daemon_running():
         die("daemon_not_running")
 
-    if args.bump:
-        print("Bumping daemon...")
-        remote_bump()
+    if args.tick:
+        print("Signaling tick to daemon...")
+        remote_tick()
 
     if args.reset:
 
@@ -620,7 +634,7 @@ if __name__ == "__main__":
 
             else:
                 print(f"Did not find '{a}' activity")
-        remote_bump()
+        remote_tick()
 
     if args.disable:
         print("Disabling activities...")
@@ -635,7 +649,7 @@ if __name__ == "__main__":
 
             else:
                 print(f"Did not find '{a}' activity")
-        remote_bump()
+        remote_tick()
 
     if start_daemon:
         print("Starting as daemon...")
@@ -646,7 +660,7 @@ if __name__ == "__main__":
         signal.signal(signal.SIGUSR1, sigusr)
         signal.signal(signal.SIGUSR2, sigusr2)
         signal.signal(signal.SIGTERM, sigterm)
-        bump()
+        tick()
         with open(path_pid, "w") as pidf:
             pidf.write(str(os.getpid()))
             pidf.close()
