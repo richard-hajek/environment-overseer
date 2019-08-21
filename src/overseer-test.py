@@ -1,7 +1,7 @@
 import unittest
 import datetime
-#from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
-from src.overseer import *
+from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
+#from src.overseer import *
 
 class OverseerTest(unittest.TestCase):
 
