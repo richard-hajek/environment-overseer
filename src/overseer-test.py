@@ -1,9 +1,13 @@
 import unittest
-import datetime
-from overseer import *  # For some reason PyCharm detects Unresolved reference, but file execution works fine
-#from src.overseer import *
+from .overseer import *
 
 class OverseerTest(unittest.TestCase):
+
+    def test_activity_matching(self):
+        assert match_activities(".*a.*", ["alpha", "beta", "gamma", "x"]).__len__() == 3
+        assert match_activities(".*a.*", ["alpha", "beta", "gamma", "x"]).__contains__("alpha")
+        assert match_activities(".*a.*", ["alpha", "beta", "gamma", "x"]).__contains__("beta")
+        assert match_activities(".*", ["alpha", "beta", "gamma", "x"]).__len__() == 4
 
     def test_auto_triggers(self):
         self.small_trigger_test("10:00", "10:02", "10:01", True)
@@ -58,23 +62,6 @@ class OverseerTest(unittest.TestCase):
         assert (3660, False) == process_limit(60, 3600, 3660, STATUS.ENABLED)
         assert (3660, True) == process_limit(60, 3600, 3670, STATUS.ENABLED)
         assert (3601, False) == process_limit(60, 3600, 3601, STATUS.ENABLED)
-
-    def test_process_activity(self):
-        decision, current_state, decisions, new_activity_time = process_activity(0, 60, STATUS.DISABLED, 0, 120, None, True, [])
-        assert current_state == STATUS.ENABLED
-
-        decision, current_state, decisions, new_activity_time = process_activity(0, 60, STATUS.ENABLED, 120, 120, None, True, [])
-        assert current_state == STATUS.DISABLED
-
-        prev_time = 0
-        curr_time = 60
-        prev_status = STATUS.DISABLED
-        activity_time = 60
-        recharge_time = 60
-        limit_time = 60
-        link_enabled = False
-        decision, current_state, decisions, new_activity_time = process_activity(prev_time, curr_time, prev_status, activity_time, recharge_time, limit_time, link_enabled, [])
-        assert new_activity_time == 0
 
 
 if __name__ == '__main__':

@@ -1,10 +1,9 @@
 [Unit]
-Description=Environment Overseer Daemon
-Requires=overseer-guardian.service
+Description=Overseer Tracker Guardian
 RefuseManualStop=true
 
 [Service]
-ExecStart=overseer
+ExecStart=/root/overseer-guardian.bash
 RestartSec=5s
 Restart=always
 

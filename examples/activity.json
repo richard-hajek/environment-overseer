@@ -1,0 +1,8 @@
+{
+	"Limit":"11H",
+	"AutoStart":"06:00",
+	"AutoStop":"23:00,",
+    "ResetOn":"02:00",
+	"InterruptAfter":"04:00",
+	"InterruptFor":"01:00"
+}

@@ -23,8 +23,20 @@ Example Setup:
 `overseer -e <activity>`: Manually enables an activity  
 `overseer -d <activity>`: Manually disables an activity  
 `overseer -r`: Resets trackers for all activities  
-`overseer -l`: Prints currently active activities (Effectively `ls /etc/overseer/enabled`)  
-`overseer -p`: Prepares Overseer's file structure
+`overseer -l`: Prints currently active activities  
+`overseer -p`: Prepares Overseer's file structure  
+`overseer -t`: Notifies Overseer of an update (Forces a **t**ick to process)
+
+## TODO
+
+[-] In general, tighten grip of Overseer to controlled devices
+[-] Interrupts
+[-] Variable resets
+[-] Regex activity matching
+[-] SSH based checking
+[-] Publish scripts
+
+[-] Better checking for OverseerGuardian
 
 ## Installation & Configuration
 
