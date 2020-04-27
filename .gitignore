@@ -1,5 +1,8 @@
 .idea
+package.sh
 __pycache__
 aur/*
 !aur/PKGBUILD
 project
+makefile
+overseer.tar.gz

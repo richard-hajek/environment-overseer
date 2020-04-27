@@ -1,6 +1,5 @@
 [Unit]
 Description=Environment Overseer Daemon
-Requires=overseer-guardian.service
 RefuseManualStop=true
 
 [Service]
