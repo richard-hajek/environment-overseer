@@ -6,7 +6,3 @@ setup(
     version='1.1.0',
     scripts=['src/overseer.py',],
 )
-
-test(
-
-)
