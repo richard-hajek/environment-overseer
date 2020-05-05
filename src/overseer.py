@@ -51,6 +51,7 @@ path_home = "/etc/overseer"
 path_activities = f"{path_home}/activities"
 path_enabled = f"{path_home}/status/enabled"
 path_ready = f"{path_home}/status/ready"
+path_checks = f"{path_home}/status/checks"
 path_trackers = f"{path_home}/status/trackers"
 path_trackers_reverse = f"{path_home}/status/reverse"
 path_continuous = f"{path_home}/status/continuous"
@@ -68,13 +69,15 @@ path_pid = f"/run/overseer.pid"
 reset_phrase = "I am an addicted idiot and need to reset the trackers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
+config_disable_unit_check = False
+verbose = False
 
 # --------------------------------------------
 # - FILESYSTEM FUNCTIONS                     -
 # --------------------------------------------
 
 def create_folders_if_non_existent():
-    for path in [path_home, path_activities, path_enabled, path_ready, path_trackers, path_trackers_reverse,
+    for path in [path_home, path_activities, path_enabled, path_ready, path_trackers, path_trackers_reverse, path_checks,
                  path_continuous, path_interrupts, path_scripts_enable, path_scripts_disable,
                  path_scripts_managers, path_scripts_checks, path_scripts_extensions]:
         if not os.path.isdir(path):
@@ -241,6 +244,7 @@ def reset_timers():
 
         if not activity.__contains__("Recharge"):
             write_activity_time(name, 0)
+        update_check(name)
 
         if os.path.islink(f"{path_enabled}/{name}"):
             os.remove(f"{path_enabled}/{name}")
@@ -264,6 +268,31 @@ def is_daemon_running():
 
 def get_all_activities():
     return [".".join(x.split(".")[:-1]) for x in os.listdir(path_activities)]
+
+
+def check_activity(act_name):
+    if not os.path.isfile(f"{path_checks}/{act_name}"):
+        return False
+
+    #update_check(act_name)
+
+    with open(f"{path_checks}/{act_name}", 'r') as file:
+        act_check = file.read()
+
+    act_time = read_activity_time(act_name)
+
+    if str(hash(str(act_time) + act_name)) != act_check:
+        print(f"[ CHECK ] FAILED: Expected {hash(str(act_time) + act_name)} got {act_check}")
+        return False
+    return True
+
+
+def update_check(act_name):
+    act_time = read_activity_time(act_name)
+
+    with open(f"{path_checks}/{act_name}", 'w') as file:
+        file.write(str(hash(str(act_time) + act_name)))
+
 
 # --------------------------------------------
 # - SIGNALING METHODS                        -
@@ -314,12 +343,14 @@ def tick():
     for event in timer.queue:
         timer.cancel(event)
 
+    print(f"Processing tick at {dt.datetime.utcfromtimestamp(int(time.time())).strftime('%Y-%m-%d %H:%M:%S')}")
     activities = parse_activities()
     previous_time = int(last_tick_at)
     current_time = int(time.time())
     time_delta = current_time - previous_time
 
-    print(f"Processing tick at {dt.datetime.utcfromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')}")
+    extension_guardian()
+
     for activity in activities.values():
 
         # --------------------------------------------
@@ -405,7 +436,6 @@ def tick():
     # - EXECUTE EXTENSIONS                       -
     # --------------------------------------------
 
-    extension_guardian()
     for extension in os.listdir(path_scripts_extensions):
         code = os.system(f"{path_scripts_extensions}/{extension} > /dev/null 2>&1")
         code = int(int(code) / 256)
@@ -505,6 +535,7 @@ def module_limit(activity_data_pack, current_status, decisions):
 
     write_activity_time(activity_name, activity_time)
     write_reverse_time(activity_name, limit - activity_time)
+    update_check(activity_name)
 
     return current_status, decisions
 
@@ -688,12 +719,13 @@ def extension_guardian():
     global allow_reset
     global systemd_unit
 
+
     # SECURING SOURCE CODE
-    path_to_code = os.path.realpath(__file__)
-    if overseer_code is None:
-        with open(path_to_code, 'r') as f:
-            overseer_code = f.read()
-    
+    #path_to_code = os.path.realpath(__file__)
+    #if overseer_code is None:
+    #    with open(path_to_code, 'r') as f:
+    #        overseer_code = f.read()
+    #
     # REMOVED because it is just annying to work with and it's not like I can cheat simply by editing the code. I mean I can cheat by editing the code but it's not gonna be simple
     #with open(path_to_code, 'r+') as f:
     #    if overseer_code != f.read():
@@ -703,17 +735,18 @@ def extension_guardian():
     #        f.truncate()
 
     # SECURING SYSTEMD UNIT
-    if systemd_unit is None:
 
-        with open(SYSTEMD_UNIT_PATH, 'r') as content_file:
-            systemd_unit = content_file.read()
+    if os.path.exists(SYSTEMD_UNIT_PATH):
+        if systemd_unit is None:
+            with open(SYSTEMD_UNIT_PATH, 'r') as content_file:
+                systemd_unit = content_file.read()
 
-    with open(SYSTEMD_UNIT_PATH, 'r+') as content_file:
-        if systemd_unit != content_file.read():
-            content_file.seek(0)
-            print(f"[GUARDIAN] Detected change in {SYSTEMD_UNIT_PATH}, overwriting with original content...")
-            content_file.write(systemd_unit)
-            content_file.truncate()
+        with open(SYSTEMD_UNIT_PATH, 'r+') as content_file:
+            if systemd_unit != content_file.read():
+                content_file.seek(0)
+                print(f"[GUARDIAN] Detected change in {SYSTEMD_UNIT_PATH}, overwriting with original content...")
+                content_file.write(systemd_unit)
+                content_file.truncate()
 
     # SECURING ACTIVITY DEFINITIONS
     if activity_defs is None:
@@ -737,27 +770,39 @@ def extension_guardian():
     if previous_time is None:
         previous_time = current_time
 
-    for activity in os.listdir(path_activities):
-        name = Path(f"{path_activities}/{activity}").stem
+    activities = parse_activities()
+    # new hash style
+    for activity in activities.values():
+        name = activity['name']
 
-        if not activity_trackers.__contains__(name):
-            activity_trackers[name] = read_activity_time(name)
+        if not check_activity(name):
+            print(f"[GUARDIAN] Detected a bad change in {name}, forcing a disable")
+            write_activity_time(name, activity["Limit"])
+            write_reverse_time(name, 0)
+            update_check(name)
 
-        current_time = read_activity_time(name)
-        prev_time = activity_trackers[name]
-        activity_trackers[name] = current_time
-
-        if current_time < prev_time:  # GREAT SUSPICION OF CHEATING
-            if process_auto_trigger(previous_time, current_time, activity_defs[name]["ResetOn"]):
-                continue
-            if activity_defs[name].__contains__("Recharge") and prev_time - current_time < RECHARGE_TOLERANCE:
-                continue
-            if allow_reset.__contains__(name):
-                continue
-
-            # If there is no reason why activity should decrease in tracker time, reset the tracker to previous value
-            print(f"[GUARDIAN] Detected change in {name}'s tracker, overwriting with previous time ({prev_time})...")
-            write_activity_time(name, prev_time)
+    # Old school time check style
+    #for activity in os.listdir(path_activities):
+    #    name = Path(f"{path_activities}/{activity}").stem
+    #
+    #    if not activity_trackers.__contains__(name):
+    #        activity_trackers[name] = read_activity_time(name)
+    #
+    #     current_time = read_activity_time(name)
+    #     prev_time = activity_trackers[name]
+    #     activity_trackers[name] = current_time
+    #
+    #     if current_time < prev_time:  # GREAT SUSPICION OF CHEATING
+    #         if process_auto_trigger(previous_time, current_time, activity_defs[name]["ResetOn"]):
+    #             continue
+    #         if activity_defs[name].__contains__("Recharge") and prev_time - current_time < RECHARGE_TOLERANCE:
+    #             continue
+    #         if allow_reset.__contains__(name):
+    #             continue
+    #
+    #         # If there is no reason why activity should decrease in tracker time, reset the tracker to previous value
+    #         print(f"[GUARDIAN] Detected change in {name}'s tracker, overwriting with previous time ({prev_time})...")
+    #         write_activity_time(name, prev_time)
 
     allow_reset = []
     previous_time = current_time
@@ -866,7 +911,6 @@ if __name__ == "__main__":
                    not args.prepare and \
                    not args.tick
 
-    verbose = args.verbose
 
     if args.list:
         activities = parse_activities()
