@@ -69,8 +69,8 @@ path_pid = f"/run/overseer.pid"
 reset_phrase = "I am an addicted idiot and need to reset the trackers."
 phrase_override_env = "OVERSEER_PHRASE_OVERRIDE"
 
-config_disable_unit_check = False
 verbose = False
+forbid_reset = False
 
 # --------------------------------------------
 # - FILESYSTEM FUNCTIONS                     -
@@ -236,8 +236,12 @@ def link_ready(act_name):
 
 
 def reset_timers():
-    activities = parse_activities()
 
+    if forbid_reset:
+        print("--forbidreset is active, ignoring reset request...")
+        return
+
+    activities = parse_activities()
     for activity in activities.values():
 
         name = activity["name"]
@@ -901,6 +905,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--prepare', action='store_true', help='Prepares the file structure')
     parser.add_argument('-t', '--tick', action='store_true', help='Forces a daemon to process a tick')
     parser.add_argument('-v', '--verbose', action='store_true', help='Makes daemon be extra verbose')
+    parser.add_argument('-f', '--forbidreset', action='store_true', help='Makes the deamon ignore reset requests')
     parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
     args = parser.parse_args()
 
@@ -911,6 +916,7 @@ if __name__ == "__main__":
                    not args.prepare and \
                    not args.tick
 
+    forbid_reset = args.forbidreset
 
     if args.list:
         activities = parse_activities()
@@ -976,6 +982,8 @@ if __name__ == "__main__":
 
         print(f"Please type: \"{reset_phrase}\"")
         phrase = input()
+
+        print("Note, that if daemon was started with --forbidreset it will ignore reset request")
 
         if phrase == reset_phrase:
             print("Resetting limits...")
