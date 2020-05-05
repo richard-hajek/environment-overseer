@@ -16,6 +16,7 @@ Example Setup:
 * [X] Automatic enabling / disabling activities based on time of day
 * [X] Automatic enabling / disabling activities based on time spent
 * [X] Manual enabling / disabling activities
+* [x] GUARDIAN System to protect Overseer's data from your tampering 
 
 ## Usage
 
@@ -29,14 +30,7 @@ Example Setup:
 
 ## TODO
 
-[-] In general, tighten grip of Overseer to controlled devices
-[-] Interrupts
-[-] Variable resets
-[-] Regex activity matching
-[-] SSH based checking
 [-] Publish scripts
-
-[-] Better checking for OverseerGuardian
 
 ## Installation & Configuration
 
