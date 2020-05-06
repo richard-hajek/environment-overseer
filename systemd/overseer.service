@@ -3,7 +3,7 @@ Description=Environment Overseer Daemon
 RefuseManualStop=true
 
 [Service]
-ExecStart=overseer
+ExecStart=overseer --forbidreset
 RestartSec=5s
 Restart=always
 
