@@ -661,6 +661,7 @@ def module_reset(activity_data, current_status, decisions):
         allow_reset.append(act_name)
 
         write_activity_time(act_name, 0)
+        update_check(act_name)
         current_status = STATUS.DISABLED
 
         if activity["Limit"]:
