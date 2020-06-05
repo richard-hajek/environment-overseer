@@ -1,0 +1,2 @@
+#!/usr/bin/sh
+/etc/overseer/scripts/managers/loghelper "reddit"

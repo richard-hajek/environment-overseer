@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole --wild -nr netflix.com
+docker exec pihole pihole --wild -nr nflxvideo.net
+docker exec pihole pihole --wild -nr nflxso.net
+
+docker exec pihole pihole restartdns

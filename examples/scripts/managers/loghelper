@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+URL=$1
+LIMIT=$((60 * 10)) #seconds, with this high speed internet youtube can bloody request half the video in one go ffs
+
+LAST_REQ=$(tail -n 60 /run/log/pihole/pihole.log | grep -Ei "$URL" | tail -n 1 -)
+
+if [[ -z "${LAST_REQ}" ]]
+then
+ exit 1
+fi
+
+LAST_REQ_TIME=$(echo "$LAST_REQ" | awk -F ' ' '{print $3}')
+LAST_REQ_TIMESTAMP=$(date --date="today $LAST_REQ_TIME" +"%s")
+NOW_TIMESTAMP=$(date --date='now' +"%s")
+
+if (( $(("$NOW_TIMESTAMP" - "$LAST_REQ_TIMESTAMP")) < "$LIMIT" ))
+then
+	exit 0
+fi
+
+exit 1

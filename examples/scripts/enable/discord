@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole --wild -d -nr discord.com
+docker exec pihole pihole --wild -d -nr discordapp.com
+
+docker exec pihole pihole restartdns

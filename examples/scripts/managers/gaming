@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+HOSTNAME=`ssh meowxiik@laptop -i /home/meowxiik/.ssh/id_rsa "cat /etc/hostname"`
+
+if [[ "$HOSTNAME" == "laptop-games" ]]
+then
+	exit 0
+fi
+
+exit 1

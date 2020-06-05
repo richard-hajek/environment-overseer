@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole --wild reddit.com
+
+#cd "$(dirname "$0")"
+#./deauth

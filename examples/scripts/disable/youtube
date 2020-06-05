@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole -b -nr youtube.com
+docker exec pihole pihole -b -nr www.youtube.com
+docker exec pihole pihole -b -nr youtubei.googleapis.com
+docker exec pihole pihole --wild -nr googlevideo.com
+
+docker exec pihole pihole restartdns

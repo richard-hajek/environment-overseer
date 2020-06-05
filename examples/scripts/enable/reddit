@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole --wild -d reddit.com

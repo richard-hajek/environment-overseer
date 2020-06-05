@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+ssh meowxiik@laptop -i /home/meowxiik/.ssh/id_rsa 'killall -r RimWorld'

@@ -10,13 +10,27 @@ Example Setup:
  - After YouTube's limit was reached, Overseer will execute `scripts/disable/youtube`
  and consider YouTube disabled
 
+See this repo's `examples` for my own config files ( THEY ARE NOT DROP IN SCRIPTS. Most of them use either my docker setup or my nickname, they are just that - examples )
+
 ## Features
 
+* [X] Rich possibilities for monitors, extensions, managers
+* [X] Manual enabling / disabling activities
 * [X] Automatic tracking of time spent on addiction prone sites
 * [X] Automatic enabling / disabling activities based on time of day
 * [X] Automatic enabling / disabling activities based on time spent
-* [X] Manual enabling / disabling activities
 * [x] GUARDIAN System to protect Overseer's data from your tampering 
+
+## Hardness
+
+Thanks to multiple checks and hashsums, Overseer is pretty hardened out of the box. I have not found a trivial way how to cheat yet.
+
+Some even more hardnening tips:
+ - Make sure Overseer's unit has `RefuseManualStop=true`
+ - Make sure you have `checks` scripts for existing activities
+ 	- Purpose of `checks` scripts is to get tripped when user tries to go over Overseer's head
+	- e.g. a `checks/youtube` would check if YouTube is actually blocked
+	- `checks` scripts are not neccessary but provide another level of safety against your lazy self
 
 ## Usage
 
@@ -28,10 +42,6 @@ Example Setup:
 `overseer -l`: Prints currently active activities  
 `overseer -p`: Prepares Overseer's file structure  
 `overseer -t`: Notifies Overseer of an update (Forces a **t**ick to process)
-
-## TODO
-
-* [ ] Publish scripts
 
 ## Installation & Configuration
 

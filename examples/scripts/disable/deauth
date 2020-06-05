@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+hostapd_cli all_sta | grep STAAddress | awk -F '=' '{print $2}' | xargs -L 1 'hostapd_cli' 'deauth'

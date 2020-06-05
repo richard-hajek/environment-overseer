@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+ADDRESS='localhost:8086'
+DB='overseer'
+TIMESTAMP=$(date +%s)000000000
+
+for activity in /etc/overseer/activities/*; do
+	
+	ACT_NAME=`basename $activity`
+	ACT_NAME="${ACT_NAME%.*}"
+
+	ACTIVE=0
+	
+	if [ -L "/etc/overseer/status/$ACT_NAME" ]
+	then
+		ACTIVE=1
+	fi
+
+	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "active,activity=$ACT_NAME value=$ACTIVE $TIMESTAMP"
+done
+
+for activity in /etc/overseer/trackers/*; do
+	TIMEUSED=$(cat $activity)
+	TIMEUSED=$(expr $TIMEUSED / 1000)
+	ACT_NAME=`basename $activity`
+	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "timeTracked,activity=$ACT_NAME value=$TIMEUSED $TIMESTAMP"
+done
+
+for activity in /etc/overseer/reverse-trackers/*; do
+	TIMELEFT=$(cat $activity)
+	TIMELEFT=$(expr $TIMELEFT / 1000)
+	ACT_NAME=`basename $activity`
+	curl -i -XPOST "http://$ADDRESS/write?db=$DB" --data-binary "timeLeft,activity=$ACT_NAME value=$TIMELEFT $TIMESTAMP"
+done

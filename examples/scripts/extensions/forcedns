@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+SSH_USER="meowxiik"
+SSH_IP="192.168.1.103"
+SSH_IDENTITY="/home/meowxiik/.ssh/id_rsa"
+
+set -euo pipefail
+
+
+ssh $SSH_USER@$SSH_IP -i $SSH_IDENTITY "sudo bash -c 'echo nameserver 192.168.1.1 > /etc/resolv.conf'"

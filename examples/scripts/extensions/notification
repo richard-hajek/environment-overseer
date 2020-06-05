@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# CONFIG
+
+ENABLED_PATH="/etc/overseer/enabled"
+TRACKERS_PATH="/etc/overseer/reverse-trackers"
+
+WARN_THRESHOLD=600 # 600 sec, 10 minutes
+
+SSH_USER="meowxiik"
+SSH_IP="laptop"
+SSH_IDENTITY="/home/meowxiik/.ssh/id_rsa"
+
+# CODE
+set -euo pipefail
+
+MESSAGES=`echo "You are running out of time on following activities:\n"`
+SEND=0
+
+for activity in $ENABLED_PATH/*
+do
+	[ -e "$activity" ] || continue
+	
+	activity=$(basename -- "$activity")
+	
+	TIMELEFT=`cat $TRACKERS_PATH/$activity`
+	TIMELEFT=$(expr $TIMELEFT / 1000)
+
+	if [[ "$WARN_THRESHOLD" -gt "$TIMELEFT" ]]
+	then
+		SEND=1
+		MESSAGES+=`echo "$activity $TIMELEFT seconds left\n"`
+	fi
+done
+
+
+if [ "$SEND" -eq 1 ]
+then
+	printf "$MESSAGES"
+	ssh $SSH_USER@$SSH_IP -i $SSH_IDENTITY "notify-send Overseer \"$MESSAGES\""
+fi

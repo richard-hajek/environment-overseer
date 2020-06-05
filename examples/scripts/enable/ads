@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+docker exec pihole pihole -w -nr 3gppnetwork.org
+docker exec pihole pihole -w -nr analytics.google.com
+docker exec pihole pihole -w -nr app-measurement.com
+docker exec pihole pihole -w -nr cdn.optimizely.com
+docker exec pihole pihole -w -nr csi.gstatic.com
+docker exec pihole pihole --wild -d -nr crashlytics.com
+docker exec pihole pihole --wild -d -nr doubleclick.net
+
+docker exec pihole pihole -w -nr e.crashlytics.com
+docker exec pihole pihole -w -nr crashlytics.com
+
+docker exec pihole pihole -w -nr www.analytics.google.com
+docker exec pihole pihole -w -nr www.google-analytics.com
+docker exec pihole pihole -w -nr www.googleadservices.com
+docker exec pihole pihole -w -nr www.googletagmanager.com
+
+docker exec pihole pihole restartdns

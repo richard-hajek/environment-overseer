@@ -1,0 +1,3 @@
+#!/usr/bin/sh
+
+tail -n 60 /run/log/pihole/pihole.log | grep $1

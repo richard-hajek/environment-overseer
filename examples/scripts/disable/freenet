@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+mv /etc/dnsmasq.d/02-strict.conf_disabled /etc/dnsmasq.d/02-strict.conf
+docker exec pihole pihole restartdns 
