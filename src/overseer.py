@@ -166,8 +166,6 @@ def read_activity_continuous_time(act_name):
     with open(path, 'r') as content_file:
         time_spent = content_file.read()
 
-    time_spent = float(time_spent) / 1000
-
     try:
         time_spent = float(time_spent) / 1000
     except():
@@ -570,48 +568,40 @@ def module_interrupts(activity_data_pack, current_status, decisions):
     interrupt_after = activity["InterruptAfter"]
     interrupt_for = activity["InterruptFor"]
 
-    if current_status == STATUS.ENABLED:
-        interrupt_action, interrupted_for, continuous_time = process_interrupt(current_status, interrupt_after, interrupt_for, continuous_time,
-                                             interrupted_for, time_delta)
+    interrupt_action, interrupted_for, continuous_time = process_interrupt(current_status,
+                                                                           interrupt_after, interrupt_for,
+                                                                           continuous_time, interrupted_for,
+                                                                           time_delta)
 
-        write_continuous_time(activity_name, continuous_time)
+    if interrupt_action == ACTION.INTERRUPT:
+        decisions.append("[INTERRUPT] Interrupt time reached! Interrupting activity")
+        current_status = STATUS.INTERRUPTED
+    elif interrupt_action == ACTION.IDLE and previous_status == STATUS.INTERRUPTED:
+        decisions.append("[INTERRUPT] Interrupt finished! You are now free to use the activity")
+        current_status = STATUS.DISABLED
 
-        if interrupt_action == ACTION.INTERRUPT:
-            decisions.append("[INTERRUPT] Interrupt time reached! Interrupting activity")
-            current_status = STATUS.INTERRUPTED
-            write_interrupted_time(activity_name, interrupted_for)
-
-    elif current_status == STATUS.INTERRUPTED:
-        interrupt_action, interrupted_for = process_interrupt(current_status, interrupt_after, interrupt_for, continuous_time,
-                                             interrupted_for, time_delta)
-
-        if interrupt_action == ACTION.IDLE and previous_status == STATUS.INTERRUPTED:
-            decisions.append("[INTERRUPT] Interrupt finished! You are now free to use the activity")
-            write_interrupted_time(activity_name, 0)
-
-    else:
-        write_continuous_time(activity_name, 0)
-        write_interrupted_time(activity_name, 0)
+    write_continuous_time(activity_name, continuous_time)
+    write_interrupted_time(activity_name, interrupted_for)
 
     return current_status, decisions
 
 
-def process_interrupt(current_status, interrupt_after, interrupt_for, continuous_time, interrupted_for, time_delta):
-    if current_status == STATUS.ENABLED and continuous_time >= interrupt_after:
-        return ACTION.INTERRUPT, interrupt_for, 0
+# RETURN interrupt_action, interrupted_for, continuous_time
+def process_interrupt(current_status, interrupt_after, interrupt_for, current_continuous_time, interrupted_for, time_delta):
+    if current_status == STATUS.ENABLED:
+        if current_continuous_time >= interrupt_after:
+            return ACTION.INTERRUPT, interrupt_for, 0
+        return ACTION.IDLE, interrupted_for, current_continuous_time + time_delta
 
-    if current_status == STATUS.ENABLED and continuous_time < interrupt_after:
-        return ACTION.IDLE, interrupted_for, continuous_time + time_delta
-
-    if interrupted_for != 0:
+    if current_status == STATUS.INTERRUPTED:
         interrupted_for -= time_delta
 
         if interrupted_for < 0:
             return ACTION.IDLE, 0
 
-        return ACTION.INTERRUPT, interrupted_for, continuous_time
+        return ACTION.INTERRUPT, interrupted_for, current_continuous_time
 
-    return ACTION.IDLE, 0, continuous_time
+    return ACTION.IDLE, 0, current_continuous_time
 
 
 def module_recharge(activity_data_pack, current_status, decisions):
