@@ -1,5 +1,5 @@
 {
-	"Limit":"18H",
-	"AutoStart":"06:00",
-	"AutoStop":"23:00"
+  "Limit": "18H",
+  "AutoStart": "06:00",
+  "AutoStop": "23:00"
 }
