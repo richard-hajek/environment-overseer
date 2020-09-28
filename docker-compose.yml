@@ -1,0 +1,11 @@
+version: '3'
+services:
+        test:
+                build:
+                        context: .
+                        dockerfile: test/Dockerfile
+                entrypoint: /bin/sh
+                tty: true
+                stdin_open: true
+                volumes:
+                        - "./:/app"
