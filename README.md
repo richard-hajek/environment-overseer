@@ -19,7 +19,7 @@ See this repo's `examples` for my own config files ( THEY ARE NOT DROP IN SCRIPT
 * [X] Automatic tracking of time spent on addiction prone sites
 * [X] Automatic enabling / disabling activities based on time of day
 * [X] Automatic enabling / disabling activities based on time spent
-* [x] GUARDIAN System to protect Overseer's data from your tampering 
+* [X] Checks and balances to make sure Overseer isn't tampered with
 
 ## Hardness
 
@@ -35,13 +35,25 @@ Some even more hardnening tips:
 ## Usage
 
 `overseer`: Start main daemon of the app   
-`overseer -f`: Start main daemon of the app, but also forces the app to ignore reset requests  
-`overseer -e <activity>`: Manually enables an activity  
-`overseer -d <activity>`: Manually disables an activity  
-`overseer -r`: Resets trackers for all activities (does nothing if daemon has `-f`)  
-`overseer -l`: Prints currently active activities  
-`overseer -p`: Prepares Overseer's file structure  
-`overseer -t`: Notifies Overseer of an update (Forces a **t**ick to process)
+`overseer --forbidreset`: Start main daemon of the app, but also forces the app to ignore reset requests  
+`overseer --enable <activity>`: Manually enables an activity  
+`overseer --disable <activity>`: Manually disables an activity  
+`overseer --reset`: Resets trackers for all activities (does nothing if daemon has `-f`)  
+`overseer --list`: Prints currently active activities  
+`overseer --prepare`: Prepares Overseer's file structure  
+`overseer --tick`: Notifies Overseer of an update
+`overseer --stop`: Gracefully stops Overseer 
+
+## Testing
+
+To make sure Overseer works, you can do
+```
+git clone https://github.com/richard-hajek/environment-overseer.git
+cd environment-overseer
+sudo docker-compose up
+```
+
+This will run end-to-end tests stored in `test/routine.sh`
 
 ## Installation & Configuration
 
