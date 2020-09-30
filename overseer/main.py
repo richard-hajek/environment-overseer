@@ -371,7 +371,7 @@ if __name__ == "__main__":
         for a in activities:
             print(a)
             if activity_exists(path_activities, a):
-                set_activity_status(path_activity_status, a, STATUS.ENABLED)
+                set_activity_status(path_activity_status, a, STATUS.DISABLED)
 
                 if os.path.isfile(f"{path_scripts_managers}/{a}"):
                     print(f"Activity {a} is managed by {path_scripts_managers}/{a}, "
