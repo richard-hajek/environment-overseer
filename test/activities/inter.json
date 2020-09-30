@@ -1,0 +1,5 @@
+{
+	"Limit":"10H",
+	"InterruptAfter": "1H",
+	"InterruptFor": "1H"
+}

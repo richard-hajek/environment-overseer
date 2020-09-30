@@ -1,5 +1,5 @@
 {
-	"Limit":"60M",
-	"InterruptAfter":"20M",
-	"InterruptFor":"1H"
+  "Limit": "60M",
+  "InterruptAfter": "20M",
+  "InterruptFor": "1H"
 }
