@@ -22,8 +22,8 @@ class Interrupt(Supermodule):
         interrupted_for = max(0, interrupted_for)
         continuous_time = min(definition_interrupt_after, continuous_time)
 
-        print(f"[DEBUG][INTERRUPT] def_interrupt_after: {definition_interrupt_after}, def_interrupt_for: {definition_interrupt_for}")
-        print(f"[DEBUG][INTERRUPT] interrupted_for: {interrupted_for}, continuous_time: {continuous_time}")
+        # print(f"[DEBUG][INTERRUPT] def_interrupt_after: {definition_interrupt_after}, def_interrupt_for: {definition_interrupt_for}")
+        # print(f"[DEBUG][INTERRUPT] interrupted_for: {interrupted_for}, continuous_time: {continuous_time}")
 
         if interrupted_for > 0:
             continuous_time = 0
