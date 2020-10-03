@@ -25,12 +25,13 @@ def create_all_records(directory=path_trackers):
         zero_if_non_existent(directory, activity.split('.')[0])
 
 
-def run(flag, directory, activity_name, verbose):
-    code = os.system(f"{directory}/{activity_name} > /dev/null 2>&1")
+def run(flag, directory, activity_name, verbose, args=""):
+    code = os.system(f"{directory}/{activity_name} {args}> /dev/null 2>&1")
     code = int(int(code) / 256)
 
     if verbose:
         print(f"[{flag}] {activity_name}, returned {code}")
+
 
 
 def run_script(script_path, verbose):

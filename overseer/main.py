@@ -149,8 +149,10 @@ def tick():
         # - PERFORM DECISIONS
         if decision == ACTION.ENABLE:
             run("ENABLE", path_scripts_enable, activity_name, verbose)
+            run("ENABLE", path_scripts_dual, activity_name, verbose, "enable")
         elif decision == ACTION.DISABLE:
             run("DISABLE", path_scripts_disable, activity_name, verbose)
+            run("DISABLE", path_scripts_dual, activity_name, verbose, "disable")
         elif decision == ACTION.IDLE:
             pass
 

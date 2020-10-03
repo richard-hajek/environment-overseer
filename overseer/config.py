@@ -51,6 +51,7 @@ path_interrupts = f"{path_home}/interrupts"
 
 path_scripts_enable = f"{path_home}/scripts/enable"
 path_scripts_disable = f"{path_home}/scripts/disable"
+path_scripts_dual = f"{path_home}/scripts/dual"
 path_scripts_managers = f"{path_home}/scripts/managers"
 path_scripts_checks = f"{path_home}/scripts/checks"
 path_scripts_extensions = f"{path_home}/scripts/extensions"
@@ -61,4 +62,4 @@ path_tmp = f"/tmp/overseer"
 
 directories = [path_home, path_activities, path_activity_status, path_trackers, path_reverse_trackers, path_checks,
                path_continuous, path_interrupts, path_scripts_enable, path_scripts_disable,
-               path_scripts_managers, path_scripts_checks, path_scripts_extensions, path_helpers, path_tmp]
+               path_scripts_managers, path_scripts_checks, path_scripts_extensions, path_helpers, path_tmp, path_scripts_dual]
