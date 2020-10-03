@@ -37,7 +37,6 @@ class Limit(Supermodule):
         for a in activities.values():
             limit_like = a.get("Limit") or a.get("Goal")
             write(a["name"], limit_like, 0)
-        pass
 
 
 CHECK_TAG = "tracker"

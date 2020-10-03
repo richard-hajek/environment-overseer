@@ -33,7 +33,6 @@ def run(flag, directory, activity_name, verbose, args=""):
         print(f"[{flag}] {activity_name}, returned {code}")
 
 
-
 def run_script(script_path, verbose):
     code = os.system(f"{script_path} > /dev/null 2>&1")
     code = int(int(code) / 256)
