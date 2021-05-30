@@ -41,7 +41,7 @@ Some even more hardnening tips:
 `overseer --reset`: Resets trackers for all activities (does nothing if daemon has `-f`)  
 `overseer --list`: Prints currently active activities  
 `overseer --prepare`: Prepares Overseer's file structure  
-`overseer --tick`: Notifies Overseer of an update
+`overseer --tick`: Notifies Overseer of an update  
 `overseer --stop`: Gracefully stops Overseer 
 
 ## Testing
