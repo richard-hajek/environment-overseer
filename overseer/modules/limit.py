@@ -21,7 +21,7 @@ class Limit(Supermodule):
         activity_time += delta * (STATUS.base[status] == STATUS.ENABLED)
         activity_time = min(activity_time, limit)
 
-        if activity_time >= limit:
+        if activity_time >= limit and not Limit.ignore(activity, time):
             status, decisions = decide(STATUS.DISABLED, "Limit", decisions)
 
         activity_time = min(activity_time, limit)
@@ -31,6 +31,17 @@ class Limit(Supermodule):
             write(activity["name"], limit, 0)
 
         return status, decisions
+
+    @staticmethod
+    def ignore(activity: {}, time: float):
+
+        if "IgnoreAfter" in activity and is_after(time, activity["IgnoreAfter"]):
+            return True
+
+        if "IgnoreBefore" in activity and is_before(time, activity["IgnoreBefore"]):
+            return True
+
+        return False
 
     def reset(self, activities):
         print("Manual reset...")

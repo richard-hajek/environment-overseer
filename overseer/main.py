@@ -4,21 +4,20 @@ import argparse
 import datetime as dt
 import sched
 import signal
-import time
 import sys
+import time
 
 from overseer.config import *
 from overseer.filesystem import *
-
-from overseer.modules.pre_check import PreCheck
-
 from overseer.modules.auto_trigger import AutoTrigger
+from overseer.modules.forbid import ForbidActivity
 from overseer.modules.forced_activity import ForcedActivity
+from overseer.modules.global_forbid import GlobalForbid
 from overseer.modules.interrupt import Interrupt
 from overseer.modules.limit import Limit
 from overseer.modules.manager import Manager
+from overseer.modules.pre_check import PreCheck
 from overseer.modules.recharge import Recharge
-
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
@@ -33,7 +32,9 @@ modules = [
     Limit(),
     ForcedActivity(),
     Interrupt(),
-    Recharge()
+    Recharge(),
+    ForbidActivity(),
+    GlobalForbid()
 ]
 
 
@@ -80,7 +81,6 @@ def sigusr2(_, __):
 
 
 def is_busy():
-
     if not is_daemon_running() or not os.path.isfile(path_busy):
         return False
 
@@ -131,6 +131,7 @@ def tick():
         status, decisions = decide(STATUS.DISABLED, "default", decisions)
 
         # - CHECKING STATUS FILE
+
         current_state = read_activity_status(path_activity_status, activity_name)
         decisions.append(f"[{current_state}] (Status File)")
 
@@ -264,7 +265,8 @@ if __name__ == "__main__":
     parser.epilog = "Exit Codes: " + " ".join([f"{exit_codes[pair][0]}:{exit_codes[pair][1]}" for pair in exit_codes])
     args = parser.parse_args()
 
-    start_daemon = not (args.enable or args.disable or args.reset or args.list or args.prepare or args.tick or args.stop)
+    start_daemon = not (
+                args.enable or args.disable or args.reset or args.list or args.prepare or args.tick or args.stop)
     verbose = args.verbose
     forbid_reset = args.forbidreset
 
@@ -283,7 +285,15 @@ if __name__ == "__main__":
         if is_busy():
             print("Daemon currently busy")
 
+        ls_activity: dict
         for ls_activity in activities.values():
+
+            if args.verbose:
+                for p in ls_activity.keys():
+                    print(f"{p}: {ls_activity[p]}", end='\t')
+                print()
+                continue
+
             print(ls_activity["name"], end='\t')
 
             status = read_activity_status(path_activity_status, ls_activity["name"])
@@ -299,6 +309,14 @@ if __name__ == "__main__":
                 print(dt.timedelta(seconds=int(read_path(path_trackers, ls_activity["name"]))), end='\t')
                 print("out of", end='\t')
                 print(dt.timedelta(seconds=int(ls_activity["Limit"])), end='\t')
+
+            if "InterruptFor" in ls_activity:
+                print("continuous:", end='\t')
+                print(dt.timedelta(seconds=int(read_path(path_continuous, ls_activity["name"]))), end='\t')
+                print("interrupt_for:", end='\t')
+                print(dt.timedelta(seconds=int(ls_activity["InterruptAfter"])), end='\t')
+                print("interrupt:", end='\t')
+                print(dt.timedelta(seconds=int(read_path(path_interrupts, ls_activity["name"]))), end='\t')
 
             if ls_activity.__contains__("Recharge"):
                 print("Rechargable", end='\t')

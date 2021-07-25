@@ -1,8 +1,9 @@
-from overseer.config import *
-from overseer.utils import *
-from overseer.filesystem import *
-from .supermodule import *
 import os
+
+from overseer.config import *
+from overseer.filesystem import *
+from overseer.utils import *
+from .supermodule import *
 
 
 class PreCheck(Supermodule):

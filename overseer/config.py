@@ -62,4 +62,5 @@ path_tmp = f"/tmp/overseer"
 
 directories = [path_home, path_activities, path_activity_status, path_trackers, path_reverse_trackers, path_checks,
                path_continuous, path_interrupts, path_scripts_enable, path_scripts_disable,
-               path_scripts_managers, path_scripts_checks, path_scripts_extensions, path_helpers, path_tmp, path_scripts_dual]
+               path_scripts_managers, path_scripts_checks, path_scripts_extensions, path_helpers, path_tmp,
+               path_scripts_dual]

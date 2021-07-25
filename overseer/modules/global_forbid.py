@@ -1,17 +1,15 @@
-from overseer.filesystem import *
 from overseer.config import *
 from overseer.utils import *
 from .supermodule import *
 
 
-class ForbidActivity(Supermodule):
+class GlobalForbid(Supermodule):
 
     def applicable(self, activity):
-        return "ForceForbid" in activity
+        return "GlobalForbid" in activity
 
     def run(self, activity, time, time_prev, delta, status, decisions, misc):
-
-        if "ForceForbid" in activity:
+        if "GlobalForbid" in activity:
             status, decisions = decide(STATUS.DISABLED, "Globally Forbidden", decisions)
 
         return status, decisions

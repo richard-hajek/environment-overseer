@@ -1,15 +1,12 @@
+import json
 import os
 
 import psutil
-import json
 
 from overseer.config import STATUS
-from overseer.config import path_checks
 from overseer.config import path_activities
+from overseer.config import path_checks
 from overseer.config import path_trackers
-from overseer.config import directories
-
-from hashlib import md5
 
 path_pid = f"/run/overseer.pid"
 path_busy = f"/run/overseer.busy"
@@ -26,7 +23,7 @@ def create_all_records(directory=path_trackers):
 
 
 def run(flag, directory, activity_name, verbose, args=""):
-    code = os.system(f"{directory}/{activity_name} {args} {'> /dev/null 2>&1' if not verbose else '' }")
+    code = os.system(f"{directory}/{activity_name} {args} {'> /dev/null 2>&1' if not verbose else ''}")
     code = int(int(code) / 256)
 
     if verbose:
@@ -115,6 +112,8 @@ def get_all_activities(path_activities):
 
 
 def create_hash(activity_name, data):
+    if type(data) == int: data = float(data)
+
     content = str(data) + activity_name
     # content = content.encode()
     # hsh = md5(content).hexdigest()

@@ -1,4 +1,3 @@
-
 class Supermodule:
 
     def prepare(self):

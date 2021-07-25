@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from overseer.config import *
 from overseer.filesystem import *
 from overseer.utils import *

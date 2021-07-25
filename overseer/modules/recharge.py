@@ -1,7 +1,6 @@
-from overseer.config import *
 from overseer.filesystem import *
-from overseer.modules.supermodule import Supermodule
 from overseer.modules.limit import write
+from overseer.modules.supermodule import Supermodule
 
 
 class Recharge(Supermodule):

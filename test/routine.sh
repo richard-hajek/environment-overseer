@@ -89,8 +89,13 @@ function test_interrupt {
   sleep 1
   startoverseer
   overseer --enable inter
-  settime "01:00:00"
+  settime "00:30:00"
   overseer --tick
+  announce "interrupt - continuous time" "`overseer -l | grep -q 'enabled!'; echo $?`"
+  settime "01:00:00"
+  sleep 4
+  overseer --tick
+  sleep 4
   announce "interrupt" "`overseer -l | grep -q 'interrupt'; echo $?`"
   settime "02:00:00"
   sleep 4 # for some reasons theses sleeps are necessary /shrug
