@@ -17,7 +17,7 @@ class Interrupt(Supermodule):
         definition_interrupt_after = activity["InterruptAfter"]
         definition_interrupt_for = activity["InterruptFor"]
 
-        if not check_check(CHECK_TAG, activity["name"], interrupted_for):
+        if not check_check(CHECK_TAG, activity["name"], float(interrupted_for)):
             decisions.append("[INTERRUPT] Detecting a bad check, forcing a full interrupt")
             interrupted_for = definition_interrupt_for
 
