@@ -13,37 +13,42 @@ class Interrupt(Supermodule):
         return "InterruptAfter" in activity
 
     def run(self, activity, time, time_prev, delta, status, decisions, misc):
+
         continuous_time = read_path(path_continuous, activity["name"])
         interrupted_for = read_path(path_interrupts, activity["name"])
 
         definition_interrupt_after = activity["InterruptAfter"]
         definition_interrupt_for = activity["InterruptFor"]
 
+        # Guardian
         if not check_check(CHECK_TAG, activity["name"], interrupted_for):
             decisions.append("[INTERRUPT] Detecting a bad check, forcing a full interrupt")
             interrupted_for = definition_interrupt_for
 
+        # Base math
         interrupted_for -= delta * (STATUS.base[status] == STATUS.DISABLED)
         continuous_time += delta * (STATUS.base[status] == STATUS.ENABLED)
-
+        continuous_time -= delta * (STATUS.base[status] == STATUS.DISABLED)
         interrupted_for = max(0, interrupted_for)
         continuous_time = min(definition_interrupt_after, continuous_time)
+        continuous_time = max(0, continuous_time)
 
-        # print(f"[DEBUG][INTERRUPT] def_interrupt_after: {definition_interrupt_after}, def_interrupt_for: {definition_interrupt_for}")
-        # print(f"[DEBUG][INTERRUPT] interrupted_for: {interrupted_for}, continuous_time: {continuous_time}")
-
-        if interrupted_for > 0 and not Limit.ignore(activity, time):
-            continuous_time = 0
-            status, decisions = decide(STATUS.INTERRUPTED, "InterruptedContinues", decisions)
-
+        # If just going into interrupted
         if continuous_time >= definition_interrupt_after and not Limit.ignore(activity, time):
             continuous_time = 0
             interrupted_for = definition_interrupt_for
             status, decisions = decide(STATUS.INTERRUPTED, "InterruptBegin", decisions)
 
+        # If currently interrupted
+        if interrupted_for > 0 and not Limit.ignore(activity, time):
+            continuous_time = 0
+            status, decisions = decide(STATUS.INTERRUPTED, "InterruptedContinues", decisions)
+
+        # If just leaving interrupted
         if status == STATUS.INTERRUPTED and interrupted_for == 0:
             status, decisions = decide(STATUS.DISABLED, "InterruptEnd", decisions)
 
+        # Reset
         if "ResetOn" in activity and just_happened(time_prev, time, activity["ResetOn"]):
             continuous_time = 0
             interrupted_for = 0

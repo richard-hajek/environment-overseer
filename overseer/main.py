@@ -7,6 +7,7 @@ import signal
 import sys
 import time
 
+from overseer import utils
 from overseer.config import *
 from overseer.filesystem import *
 from overseer.modules.auto_trigger import AutoTrigger
@@ -21,6 +22,7 @@ from overseer.modules.recharge import Recharge
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
+from overseer.resetter import Resetter
 from overseer.utils import decide
 
 verbose = False
@@ -111,6 +113,9 @@ def tick():
 
     current_time = int(time.time())
     delta = current_time - previous_time
+
+    if utils.just_happened(previous_time, current_time, "04:00"):
+        resetter.write()
 
     status_printed = False
     for activity in activities.values():
@@ -417,6 +422,9 @@ if __name__ == "__main__":
         with open(path_pid, "w") as pidf:
             pidf.write(str(os.getpid()))
             pidf.close()
+
+        resetter = Resetter()
+        resetter.scan()
         timer.run()
 
     if args.stop:
