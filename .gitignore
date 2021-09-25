@@ -1,9 +1,6 @@
 .idea
-package.sh
 __pycache__
-aur/*
-!aur/PKGBUILD
-project
+overseer_meowxiik.egg-info
 makefile
 overseer.tar.gz
-overseer_meowxiik.egg-info
+package.sh
