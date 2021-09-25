@@ -7,23 +7,23 @@ import signal
 import sys
 import time
 
-from overseer import utils
-from overseer.config import *
-from overseer.filesystem import *
-from overseer.modules.auto_trigger import AutoTrigger
-from overseer.modules.forbid import ForbidActivity
-from overseer.modules.forced_activity import ForcedActivity
-from overseer.modules.global_forbid import GlobalForbid
-from overseer.modules.interrupt import Interrupt
-from overseer.modules.limit import Limit
-from overseer.modules.manager import Manager
-from overseer.modules.pre_check import PreCheck
-from overseer.modules.recharge import Recharge
+from src.overseer import utils
+from src.overseer.config import *
+from src.overseer.filesystem import *
+from src.overseer.modules.auto_trigger import AutoTrigger
+from src.overseer.modules.forbid import ForbidActivity
+from src.overseer.modules.forced_activity import ForcedActivity
+from src.overseer.modules.global_forbid import GlobalForbid
+from src.overseer.modules.interrupt import Interrupt
+from src.overseer.modules.limit import Limit
+from src.overseer.modules.manager import Manager
+from src.overseer.modules.pre_check import PreCheck
+from src.overseer.modules.recharge import Recharge
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
-from overseer.resetter import Resetter
-from overseer.utils import decide
+from src.overseer.resetter import Resetter
+from src.overseer.utils import decide
 
 verbose = False
 forbid_reset = False

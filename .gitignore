@@ -3,4 +3,7 @@ __pycache__
 overseer_meowxiik.egg-info
 makefile
 overseer.tar.gz
-package.sh
+venv
+dist/*
+!dist/.gitkeep
+*.egg-info

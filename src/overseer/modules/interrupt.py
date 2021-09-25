@@ -1,8 +1,8 @@
-from overseer.config import *
-from overseer.filesystem import *
-from overseer.modules.limit import Limit
-from overseer.modules.supermodule import Supermodule
-from overseer.utils import *
+from src.overseer.config import *
+from src.overseer.filesystem import *
+from src.overseer.modules.limit import Limit
+from src.overseer.modules.supermodule import Supermodule
+from src.overseer.utils import *
 
 CHECK_TAG = "interrupt"
 

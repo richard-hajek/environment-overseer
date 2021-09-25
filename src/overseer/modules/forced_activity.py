@@ -1,6 +1,6 @@
-from overseer.config import *
-from overseer.filesystem import *
-from overseer.utils import *
+from src.overseer.config import *
+from src.overseer.filesystem import *
+from src.overseer.utils import *
 from .supermodule import *
 
 path_scripts_block = f"{path_home}/scripts/block"

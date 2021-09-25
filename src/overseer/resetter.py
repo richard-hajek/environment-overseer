@@ -1,5 +1,5 @@
 import os.path
-import overseer.config as cfg
+import src.overseer.config as cfg
 
 
 class Resetter:

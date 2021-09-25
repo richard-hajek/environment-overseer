@@ -42,18 +42,7 @@ Some even more hardnening tips:
 `overseer --list`: Prints currently active activities  
 `overseer --prepare`: Prepares Overseer's file structure  
 `overseer --tick`: Notifies Overseer of an update
-`overseer --stop`: Gracefully stops Overseer 
-
-## Testing
-
-To make sure Overseer works, you can do
-```
-git clone https://github.com/richard-hajek/environment-overseer.git
-cd environment-overseer
-sudo docker-compose up
-```
-
-This will run end-to-end tests stored in `test/routine.sh`
+`overseer --stop`: Gracefully stops Overseer
 
 ## Installation & Configuration
 
