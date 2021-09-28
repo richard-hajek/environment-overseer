@@ -1,5 +1,5 @@
-from src.overseer.config import *
-from src.overseer.utils import *
+from overseer.config import *
+from overseer.utils import *
 from .supermodule import *
 
 

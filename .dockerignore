@@ -1,0 +1,10 @@
+dist
+examples
+tests/Dockerfile
+.gitignore
+.dockerignore
+LICENSE
+makefile
+README.md
+.idea
+venv

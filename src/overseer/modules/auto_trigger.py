@@ -1,5 +1,6 @@
-from src.overseer.config import *
-from src.overseer.utils import *
+from overseer.config import *
+from overseer.utils import *
+
 from .supermodule import *
 
 
@@ -16,3 +17,22 @@ class AutoTrigger(Supermodule):
             status, decisions = decide(STATUS.DISABLED, "AutoStart", decisions)
 
         return status, decisions
+
+    @staticmethod
+    def self_test(add_activity, set_time, set_activity, run_command, activity_assert):
+
+        routines = []
+
+        routines.append(
+            [
+                add_activity({"Limit": "1H", "AutoStart": "01:00", "AutoStop": "01:30"}),
+                set_time("00:55"),
+                activity_assert("disabled"),
+                set_time("01:10"),
+                activity_assert("enabled"),
+                set_time("01:40"),
+                activity_assert("disabled")
+            ]
+        )
+
+        return routines

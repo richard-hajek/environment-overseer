@@ -4,26 +4,27 @@ import argparse
 import datetime as dt
 import sched
 import signal
+import stat
 import sys
 import time
 
-from src.overseer import utils
-from src.overseer.config import *
-from src.overseer.filesystem import *
-from src.overseer.modules.auto_trigger import AutoTrigger
-from src.overseer.modules.forbid import ForbidActivity
-from src.overseer.modules.forced_activity import ForcedActivity
-from src.overseer.modules.global_forbid import GlobalForbid
-from src.overseer.modules.interrupt import Interrupt
-from src.overseer.modules.limit import Limit
-from src.overseer.modules.manager import Manager
-from src.overseer.modules.pre_check import PreCheck
-from src.overseer.modules.recharge import Recharge
+from overseer import utils
+from overseer.config import *
+from overseer.filesystem import *
+from overseer.modules.auto_trigger import AutoTrigger
+from overseer.modules.forbid import ForbidActivity
+from overseer.modules.forced_activity import ForcedActivity
+from overseer.modules.global_forbid import GlobalForbid
+from overseer.modules.interrupt import Interrupt
+from overseer.modules.limit import Limit
+from overseer.modules.manager import Manager
+from overseer.modules.pre_check import PreCheck
+from overseer.modules.recharge import Recharge
 # --------------------------------------------
 # - DEFINE APP VARIABLES                     -
 # --------------------------------------------
-from src.overseer.resetter import Resetter
-from src.overseer.utils import decide
+from overseer.resetter import Resetter
+from overseer.utils import decide
 
 verbose = False
 forbid_reset = False
@@ -39,6 +40,8 @@ modules = [
     GlobalForbid()
 ]
 
+timer = sched.scheduler(time.time, time.sleep)
+resetter = Resetter()
 
 # --------------------------------------------
 # - IPC                                     -
@@ -52,6 +55,7 @@ def remote(n: signal.Signals):
 
 
 def remote_tick():
+    set_busy(True)
     remote(signal.SIGUSR1)
 
 
@@ -95,6 +99,21 @@ def set_busy(busy: bool):
     with open(path_busy, 'w') as f:
         f.write("1" if busy else "0")
 
+    try:
+        os.chmod(path_busy, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
+    except:
+        pass
+
+
+def wait_for_until_not_busy(timeout=4):
+    started_waiting = time.time()
+
+    while timeout is None or started_waiting + timeout >= time.time():
+        if not is_busy():
+            return
+
+    raise TimeoutError("Timeout on wait_for_until_not_busy")
+
 
 # --------------------------------------------
 # - CORE / PROCESSING                        -
@@ -112,6 +131,10 @@ def tick():
     activities = parse_activities()
 
     current_time = int(time.time())
+
+    if previous_time is None:
+        previous_time = current_time
+
     delta = current_time - previous_time
 
     if utils.just_happened(previous_time, current_time, "04:00"):
@@ -250,12 +273,11 @@ def prepare():
     create_folders_if_non_existent(directories)
 
 
-if __name__ == "__main__":
-
+def main():
+    global previous_time
+    global previous_states
     previous_states = {}
-
     previous_time = int(time.time())
-    timer = sched.scheduler(time.time, time.sleep)
 
     parser = argparse.ArgumentParser(description="Controls the environment overseer")
     parser.add_argument('-e', '--enable', nargs='+', help='Enables an activity')
@@ -271,7 +293,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     start_daemon = not (
-                args.enable or args.disable or args.reset or args.list or args.prepare or args.tick or args.stop)
+            args.enable or args.disable or args.reset or args.list or args.prepare or args.tick or args.stop)
+    global verbose
+    global forbid_reset
     verbose = args.verbose
     forbid_reset = args.forbidreset
 
@@ -409,6 +433,10 @@ if __name__ == "__main__":
 
     if start_daemon:
         print("Starting as daemon...")
+
+        if verbose:
+            print(f"With args: {args}")
+
         create_folders_if_non_existent(directories)
         os.chdir(path_home)
         os.environ['PATH'] = f"{path_helpers}:{os.environ['PATH']}"
@@ -423,7 +451,6 @@ if __name__ == "__main__":
             pidf.write(str(os.getpid()))
             pidf.close()
 
-        resetter = Resetter()
         resetter.scan()
         timer.run()
 
@@ -432,3 +459,7 @@ if __name__ == "__main__":
         remote(signal.SIGTERM)
         time.sleep(0.1)
         while is_busy(): time.sleep(0.5)
+
+
+if __name__ == "__main__":
+    main()

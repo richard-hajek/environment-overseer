@@ -1,5 +1,5 @@
 import os.path
-import src.overseer.config as cfg
+import overseer.config as cfg
 
 
 class Resetter:
@@ -8,6 +8,7 @@ class Resetter:
         self.scanned = {}
 
     def scan(self):
+        return
 
         for act_name in os.listdir(cfg.path_activities):
             with open(os.path.join(cfg.path_activities, act_name)) as f:
@@ -18,6 +19,9 @@ class Resetter:
                 self.scanned[f"dual/{act_name}"] = f.readlines()
 
     def write(self):
+
+        return
+
         for k, v in self.scanned.items():
             with open(os.path.join(cfg.path_home, k), "w") as f:
                 f.writelines(v)

@@ -3,10 +3,10 @@ import os
 
 import psutil
 
-from src.overseer.config import STATUS
-from src.overseer.config import path_activities
-from src.overseer.config import path_checks
-from src.overseer.config import path_trackers
+from overseer.config import STATUS
+from overseer.config import path_activities
+from overseer.config import path_checks
+from overseer.config import path_trackers
 
 path_pid = f"/run/overseer.pid"
 path_busy = f"/run/overseer.busy"
@@ -153,6 +153,7 @@ def parse_activities():
     activities = {}
 
     for name in names:
+
         with open(f"{path_activities}/{name}", 'r') as f:
             activity = json.load(f)
 

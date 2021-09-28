@@ -1,7 +1,7 @@
-from src.overseer.config import *
-from src.overseer.filesystem import *
-from src.overseer.modules.supermodule import Supermodule
-from src.overseer.utils import *
+from overseer.config import *
+from overseer.filesystem import *
+from overseer.modules.supermodule import Supermodule
+from overseer.utils import *
 
 
 class Limit(Supermodule):
